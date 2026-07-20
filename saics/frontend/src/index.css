@@ -1,0 +1,578 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
+
+:root {
+  /* ---- Acadance palette ---- */
+  --paper: #faf8f3;
+  --surface: #ffffff;
+  --ink: #1c1b29;
+  --ink-soft: #55536b;
+  --line: #e6e0d4;
+
+  --teal: #0e6e66;
+  --teal-deep: #0a4f49;
+  --teal-tint: #e4f2f0;
+
+  --amber: #e7a33e;
+  --amber-tint: #fdf0dd;
+
+  --brick: #b8542f;
+  --brick-tint: #fbeae2;
+
+  --radius: 10px;
+  --shadow: 0 2px 4px rgba(28, 27, 41, 0.04), 0 8px 24px rgba(28, 27, 41, 0.06);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  font-family: "Fraunces", Georgia, serif;
+  letter-spacing: -0.01em;
+}
+
+.mono {
+  font-family: "IBM Plex Mono", monospace;
+}
+
+a {
+  color: inherit;
+}
+
+/* ==========================================================
+   Cadence bars — the signature motif.
+   A rhythm/pulse pattern used both decoratively (auth screens)
+   and functionally (literal streak data on the dashboard).
+   ========================================================== */
+.cadence-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.cadence-bars .bar {
+  width: 6px;
+  border-radius: 3px;
+  background: currentColor;
+}
+
+@keyframes drift {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(1.25); }
+}
+
+/* ==========================================================
+   Auth pages (Login / Register) — split screen
+   ========================================================== */
+.auth-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+@media (max-width: 860px) {
+  .auth-shell {
+    grid-template-columns: 1fr;
+  }
+  .auth-brand-panel {
+    display: none;
+  }
+}
+
+.auth-brand-panel {
+  background: var(--teal-deep);
+  color: #f4efe4;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 48px;
+}
+
+.auth-brand-panel .wordmark {
+  font-family: "Fraunces", serif;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.auth-brand-panel .tagline {
+  max-width: 340px;
+}
+
+.auth-brand-panel .tagline h2 {
+  font-size: 32px;
+  line-height: 1.15;
+  margin: 0 0 12px;
+  color: #fff;
+}
+
+.auth-brand-panel .tagline p {
+  color: #cfe4e1;
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Ambient cadence-bar field, drifting gently in the background */
+.bar-field {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 0 40px 40px;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.bar-field .bar {
+  flex: 1;
+  background: #4fb8ac;
+  border-radius: 4px 4px 0 0;
+  animation: drift 4.5s ease-in-out infinite;
+  transform-origin: bottom;
+}
+
+.auth-form-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--paper);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 380px;
+}
+
+.auth-card .eyebrow {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin: 0 0 10px;
+}
+
+.auth-card h1 {
+  margin: 0 0 6px;
+  font-size: 28px;
+  color: var(--ink);
+}
+
+.auth-card .subtitle {
+  margin: 0 0 28px;
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+.auth-card label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  margin-top: 18px;
+  color: var(--ink);
+}
+
+.auth-card input {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-family: "Inter", sans-serif;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.auth-card input:focus {
+  outline: none;
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px var(--teal-tint);
+}
+
+.auth-card button {
+  margin-top: 26px;
+  width: 100%;
+  padding: 13px;
+  background: var(--teal);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 15px;
+  font-weight: 600;
+  font-family: "Inter", sans-serif;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.auth-card button:hover:not(:disabled) {
+  background: var(--teal-deep);
+}
+
+.auth-card button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.switch-link {
+  text-align: center;
+  margin-top: 22px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.switch-link a {
+  color: var(--teal);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.error-banner {
+  background: var(--brick-tint);
+  color: var(--brick);
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  border: 1px solid rgba(184, 84, 47, 0.2);
+}
+
+/* ==========================================================
+   Dashboard — sidebar + topbar layout
+   ========================================================== */
+.app-shell {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 100vh;
+}
+
+@media (max-width: 760px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+  .sidebar {
+    display: none;
+  }
+}
+
+.sidebar {
+  background: var(--teal-deep);
+  color: #f4efe4;
+  padding: 28px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.sidebar .wordmark {
+  font-family: "Fraunces", serif;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sidebar nav a,
+.sidebar nav .nav-item {
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #cfe4e1;
+  text-decoration: none;
+  cursor: default;
+}
+
+.sidebar nav .nav-item.active {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-weight: 600;
+}
+
+.sidebar nav .nav-item:not(.disabled):hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.sidebar nav .nav-item.disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.card[role="button"] {
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.card[role="button"]:hover {
+  border-color: var(--teal);
+  transform: translateY(-2px);
+}
+
+/* ---------- Performance page: form + table ---------- */
+.performance-form .form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  margin-bottom: 4px;
+}
+
+.performance-form label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  margin-top: 14px;
+  color: var(--ink);
+}
+
+.performance-form input,
+.performance-form select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-family: "Inter", sans-serif;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.performance-form input:focus,
+.performance-form select:focus {
+  outline: none;
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px var(--teal-tint);
+}
+
+.performance-form button {
+  margin-top: 20px;
+  padding: 11px 22px;
+  background: var(--teal);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.performance-form button:hover:not(:disabled) {
+  background: var(--teal-deep);
+}
+
+.performance-form button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.records-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.records-table th {
+  text-align: left;
+  padding: 10px 12px;
+  color: var(--ink-soft);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-bottom: 1px solid var(--line);
+}
+
+.records-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.records-table tr:last-child td {
+  border-bottom: none;
+}
+
+.delete-btn {
+  background: none;
+  border: none;
+  color: var(--brick);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.delete-btn:hover {
+  text-decoration: underline;
+}
+
+/* ---------- Streak page ---------- */
+.streak-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 20px;
+}
+
+.stat-label {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+}
+
+.stat-value {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.streak-history-bars {
+  height: 140px;
+  align-items: flex-end;
+  gap: 14px;
+  color: var(--amber);
+}
+
+.streak-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  height: 100%;
+  justify-content: flex-end;
+}
+
+.streak-day .bar {
+  width: 100%;
+  max-width: 32px;
+}
+
+.day-label {
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
+.streak-explainer {
+  margin: 18px 0 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+
+.main-content {
+  padding: 36px 44px;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 36px;
+}
+
+.topbar h1 {
+  font-size: 26px;
+  margin: 0;
+}
+
+.topbar .greeting-eyebrow {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin: 0 0 4px;
+}
+
+.logout-btn {
+  background: none;
+  border: 1px solid var(--line);
+  padding: 9px 18px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 14px;
+  font-family: "Inter", sans-serif;
+  color: var(--ink);
+}
+
+.logout-btn:hover {
+  background: var(--surface);
+  border-color: var(--teal);
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 26px;
+  box-shadow: var(--shadow);
+}
+
+.card h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  color: var(--ink);
+}
+
+.card p {
+  margin: 0 0 18px;
+  color: var(--ink-soft);
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.placeholder-tag {
+  display: inline-block;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--teal);
+  background: var(--teal-tint);
+  padding: 5px 11px;
+  border-radius: 999px;
+}
+
+/* Streak card — the cadence bars doing real work as data viz */
+.streak-card .cadence-bars {
+  color: var(--amber);
+  height: 44px;
+  margin-bottom: 10px;
+}
+
+.streak-card .streak-count {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.streak-card .streak-count span {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  margin-left: 6px;
+}
