@@ -477,6 +477,136 @@ a {
   line-height: 1.6;
 }
 
+/* ---------- Study Sessions list ---------- */
+.session-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.session-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.session-title {
+  margin: 0 0 4px;
+  font-weight: 600;
+  font-size: 14.5px;
+  color: var(--ink);
+}
+
+.session-meta {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+.join-btn {
+  padding: 9px 20px;
+  background: var(--teal);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.join-btn:hover {
+  background: var(--teal-deep);
+}
+
+/* ---------- Voice Study Room ---------- */
+.room-participants {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.participant-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 24px 12px;
+  text-align: center;
+  position: relative;
+}
+
+.participant-tile.you {
+  border-color: var(--teal);
+}
+
+.avatar-circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--teal-tint);
+  color: var(--teal-deep);
+  font-family: "Fraunces", serif;
+  font-size: 22px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.participant-tile p {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.muted-tag {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10.5px;
+  color: var(--brick);
+  background: var(--brick-tint);
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.room-controls {
+  display: flex;
+  gap: 12px;
+}
+
+.mute-btn,
+.leave-btn {
+  padding: 11px 24px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.mute-btn:hover {
+  border-color: var(--teal);
+}
+
+.leave-btn {
+  background: var(--brick);
+  color: #fff;
+  border: none;
+}
+
+.leave-btn:hover {
+  background: #9c4526;
+}
+
 .main-content {
   padding: 36px 44px;
 }

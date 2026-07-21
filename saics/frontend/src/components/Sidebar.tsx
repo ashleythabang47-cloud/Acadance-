@@ -4,7 +4,7 @@ const navItems = [
   { label: "Dashboard", path: "/dashboard", enabled: true },
   { label: "Performance", path: "/performance", enabled: true },
   { label: "Quizzes", path: "/quizzes", enabled: false },
-  { label: "Study Sessions", path: "/study-sessions", enabled: false },
+  { label: "Study Sessions", path: "/study-sessions", enabled: true },
   { label: "Streak", path: "/streak", enabled: true },
 ];
 
@@ -19,9 +19,11 @@ export default function Sidebar() {
         {navItems.map((item) => (
           <span
             key={item.path}
-            className={`nav-item ${location.pathname === item.path ? "active" : ""} ${
-              !item.enabled ? "disabled" : ""
-            }`}
+            className={`nav-item ${
+              location.pathname === item.path || location.pathname.startsWith(item.path + "/")
+                ? "active"
+                : ""
+            } ${!item.enabled ? "disabled" : ""}`}
             onClick={() => item.enabled && navigate(item.path)}
             role="button"
           >

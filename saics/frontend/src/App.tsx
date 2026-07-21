@@ -6,6 +6,8 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Performance from "./pages/Performance";
 import Streak from "./pages/Streak";
+import StudySessions from "./pages/StudySessions";
+import StudyRoom from "./pages/StudyRoom";
 import "./index.css";
 
 function App() {
@@ -37,6 +39,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <Streak />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/study-sessions"
+            element={
+              <ProtectedRoute>
+                <StudySessions />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/study-sessions/:id"
+            element={
+              <ProtectedRoute>
+                <StudyRoom />
               </ProtectedRoute>
             }
           />

@@ -48,10 +48,10 @@ export default function Dashboard() {
             <span className="placeholder-tag">Coming soon</span>
           </div>
 
-          <div className="card">
+          <div className="card" onClick={() => navigate("/study-sessions")} role="button">
             <h3>Study Sessions</h3>
             <p>Join voice-based collaborative study rooms.</p>
-            <span className="placeholder-tag">Coming soon</span>
+            <span className="placeholder-tag">View</span>
           </div>
 
           <div
