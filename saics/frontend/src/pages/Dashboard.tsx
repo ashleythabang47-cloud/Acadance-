@@ -42,10 +42,10 @@ export default function Dashboard() {
             <span className="placeholder-tag">View</span>
           </div>
 
-          <div className="card">
+          <div className="card" onClick={() => navigate("/quizzes")} role="button">
             <h3>Quizzes</h3>
             <p>AI-generated quizzes based on your study material.</p>
-            <span className="placeholder-tag">Coming soon</span>
+            <span className="placeholder-tag">View</span>
           </div>
 
           <div className="card" onClick={() => navigate("/study-sessions")} role="button">

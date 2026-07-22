@@ -8,6 +8,9 @@ import Performance from "./pages/Performance";
 import Streak from "./pages/Streak";
 import StudySessions from "./pages/StudySessions";
 import StudyRoom from "./pages/StudyRoom";
+import Quizzes from "./pages/Quizzes";
+import TakeQuiz from "./pages/TakeQuiz";
+import Profile from "./pages/Profile";
 import "./index.css";
 
 function App() {
@@ -55,6 +58,30 @@ function App() {
             element={
               <ProtectedRoute>
                 <StudyRoom />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/quizzes"
+            element={
+              <ProtectedRoute>
+                <Quizzes />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/quizzes/:id"
+            element={
+              <ProtectedRoute>
+                <TakeQuiz />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
               </ProtectedRoute>
             }
           />

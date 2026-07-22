@@ -9,6 +9,7 @@ import subjectRoutes from "./routes/subjectRoutes";
 import performanceRoutes from "./routes/performanceRoutes";
 import streakRoutes from "./routes/streakRoutes";
 import studySessionRoutes from "./routes/studySessionRoutes";
+import quizRoutes from "./routes/quizRoutes";
 import { attachSignaling } from "./sockets/signaling";
 
 dotenv.config();
@@ -31,6 +32,7 @@ app.use("/api/subjects", subjectRoutes);
 app.use("/api/performance", performanceRoutes);
 app.use("/api/streaks", streakRoutes);
 app.use("/api/study-sessions", studySessionRoutes);
+app.use("/api/quizzes", quizRoutes);
 
 // WebRTC signaling (voice study sessions) rides on the same HTTP server.
 attachSignaling(httpServer);

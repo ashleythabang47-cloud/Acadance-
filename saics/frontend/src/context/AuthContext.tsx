@@ -11,6 +11,7 @@ interface AuthContextType {
   student: Student | null;
   login: (student: Student, token: string) => void;
   logout: () => void;
+  updateStudentInfo: (partial: Partial<Student>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,8 +34,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStudent(null);
   }
 
+  // Call this whenever profile fields change elsewhere (e.g. the Profile
+  // page) so the name shown in the sidebar/dashboard/topbar stays in sync
+  // without requiring a full re-login.
+  function updateStudentInfo(partial: Partial<Student>) {
+    setStudent((prev) => {
+      if (!prev) return prev;
+      const updated = { ...prev, ...partial };
+      localStorage.setItem("saics_student", JSON.stringify(updated));
+      return updated;
+    });
+  }
+
   return (
-    <AuthContext.Provider value={{ student, login, logout }}>
+    <AuthContext.Provider value={{ student, login, logout, updateStudentInfo }}>
       {children}
     </AuthContext.Provider>
   );

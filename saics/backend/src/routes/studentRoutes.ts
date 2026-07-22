@@ -1,21 +1,17 @@
-import { Router, Response } from "express";
-import { requireAuth, AuthRequest } from "../middleware/authMiddleware";
-import { StudentModel } from "../models/studentModel";
+import { Router } from "express";
+import { requireAuth } from "../middleware/authMiddleware";
+import {
+  getMyProfile,
+  updateMyProfile,
+  enrollInSubject,
+  unenrollFromSubject,
+} from "../controllers/studentController";
 
 const router = Router();
 
-// GET /api/students/me - returns the logged-in student's profile
-router.get("/me", requireAuth, async (req: AuthRequest, res: Response) => {
-  try {
-    const student = await StudentModel.findById(req.studentId!);
-    if (!student) {
-      return res.status(404).json({ message: "Student not found." });
-    }
-    return res.status(200).json({ student });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: "Server error." });
-  }
-});
+router.get("/me", requireAuth, getMyProfile);
+router.put("/me", requireAuth, updateMyProfile);
+router.post("/me/subjects", requireAuth, enrollInSubject);
+router.delete("/me/subjects/:subjectId", requireAuth, unenrollFromSubject);
 
 export default router;

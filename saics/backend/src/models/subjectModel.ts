@@ -30,4 +30,30 @@ export const SubjectModel = {
     );
     return result.insertId;
   },
+
+  async listForStudent(studentId: number): Promise<Subject[]> {
+    const [rows] = await pool.query<RowDataPacket[]>(
+      `SELECT s.* FROM subjects s
+       JOIN student_subjects ss ON ss.subject_id = s.subject_id
+       WHERE ss.student_id = ?
+       ORDER BY s.subject_name ASC`,
+      [studentId]
+    );
+    return rows as Subject[];
+  },
+
+  async enroll(studentId: number, subjectId: number): Promise<void> {
+    // Idempotent — enrolling twice in the same subject is a no-op, not an error.
+    await pool.query(
+      `INSERT IGNORE INTO student_subjects (student_id, subject_id) VALUES (?, ?)`,
+      [studentId, subjectId]
+    );
+  },
+
+  async unenroll(studentId: number, subjectId: number): Promise<void> {
+    await pool.query(
+      `DELETE FROM student_subjects WHERE student_id = ? AND subject_id = ?`,
+      [studentId, subjectId]
+    );
+  },
 };

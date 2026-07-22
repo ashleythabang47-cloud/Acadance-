@@ -3,9 +3,10 @@ import { useNavigate, useLocation } from "react-router-dom";
 const navItems = [
   { label: "Dashboard", path: "/dashboard", enabled: true },
   { label: "Performance", path: "/performance", enabled: true },
-  { label: "Quizzes", path: "/quizzes", enabled: false },
+  { label: "Quizzes", path: "/quizzes", enabled: true },
   { label: "Study Sessions", path: "/study-sessions", enabled: true },
   { label: "Streak", path: "/streak", enabled: true },
+  { label: "Profile", path: "/profile", enabled: true },
 ];
 
 export default function Sidebar() {
