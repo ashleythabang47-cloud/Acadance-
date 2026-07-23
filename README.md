@@ -1,6 +1,22 @@
+
+<div align="center">
+
 # Acadance
 
-**Student Academic Insights & Collaborative System**
+### Student Academic Insights & Collaborative System
+
+<img src="https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react"/>
+
+<img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript"/>
+
+<img src="https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express"/>
+
+<img src="https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql"/>
+
+<img src="https://img.shields.io/badge/JWT-Authentication-blue?style=for-the-badge"/>
+
+</div>
+<br>
 
 A full-stack academic platform that helps students track performance, build consistent study habits, and (in later phases) collaborate through AI-generated quizzes and voice-based study sessions.
 
@@ -18,12 +34,12 @@ The name reflects the core idea: **academic + cadence** — building a sustainab
 
 | Module | Status | Description |
 |---|---|---|
-| Authentication | ✅ Complete | Secure registration/login with hashed passwords and JWT sessions |
-| Academic Tracking | ✅ Complete | Log test/assignment results per subject, view trends on an interactive chart |
-| Streaks & Gamification | ✅ Complete | Real activity-based streak tracking (not a manual counter) — login, logging results, and future actions all count |
-| AI Quiz Generation | 🔜 Planned | Auto-generated quizzes from study material with auto-marking |
-| Voice Study Sessions | 🔜 Planned | Real-time collaborative study rooms via WebRTC |
-| Predictive Analytics | 🔜 Planned | At-risk student identification from historical performance data |
+| Authentication |  Complete | Secure registration/login with hashed passwords and JWT sessions |
+| Academic Tracking |  Complete | Log test/assignment results per subject, view trends on an interactive chart |
+| Streaks & Gamification | Complete | Real activity-based streak tracking (not a manual counter) — login, logging results, and future actions all count |
+| AI Quiz Generation |  Planned | Auto-generated quizzes from study material with auto-marking |
+| Voice Study Sessions | Complete | Real-time collaborative study rooms via WebRTC |
+| Predictive Analytics | Planned | At-risk student identification from historical performance data |
 
 ## Tech Stack
 
@@ -126,6 +142,157 @@ Open the frontend URL, register an account, and you're in.
 ## Design System
 
 The interface is built around the product's own name: a "cadence bar" motif (a rhythm/pulse pattern) that appears both decoratively on auth screens and functionally as the literal streak visualization. Typography pairs a serif display face (Fraunces) with Inter for UI text and IBM Plex Mono for all numeric data, so scores and streak counts read distinctly from prose.
+
+## System Architecture
+
+```mermaid
+flowchart TD
+
+    Student[Student]
+
+    Student --> UI
+
+    subgraph Frontend
+        UI[React + TypeScript]
+        Dashboard[Dashboard]
+        Charts[Performance Charts]
+        AuthContext[Authentication Context]
+    end
+
+    UI --> API
+
+    subgraph Backend
+        API[Express API]
+        Auth[JWT Authentication]
+        Performance[Performance Module]
+        Streaks[Streak Module]
+        Quiz[AI Quiz Engine]
+        Analytics[Predictive Analytics]
+        Voice[WebRTC Signalling]
+    end
+
+    API --> DB
+
+    subgraph Data
+        DB[(MySQL Database)]
+    end
+
+    Quiz --> Gemini[Google Gemini API]
+
+    Voice --> RTC[WebRTC]
+
+    Analytics --> Prediction[Risk Analysis Engine]
+```
+
+## Request Flow
+
+```mermaid
+sequenceDiagram
+
+    participant User
+    participant Frontend
+    participant API
+    participant Database
+
+    User->>Frontend: Login
+
+    Frontend->>API: POST /api/auth/login
+
+    API->>Database: Validate credentials
+
+    Database-->>API: Student record
+
+    API-->>Frontend: JWT Token
+
+    Frontend-->>User: Dashboard
+
+    User->>Frontend: Add Performance
+
+    Frontend->>API: POST /api/performance
+
+    API->>Database: Save Record
+
+    Database-->>API: Success
+
+    API-->>Frontend: Updated Performance
+```
+
+## Database Design
+
+```mermaid
+erDiagram
+
+    STUDENT ||--o{ PERFORMANCE : records
+    STUDENT ||--o{ STREAK : has
+    STUDENT ||--o{ QUIZ : generates
+
+    SUBJECT ||--o{ PERFORMANCE : contains
+
+    QUIZ ||--o{ QUESTION : includes
+
+    STUDENT {
+        int student_id
+        string name
+        string email
+    }
+
+    SUBJECT {
+        int subject_id
+        string name
+    }
+
+    PERFORMANCE {
+        int performance_id
+        float mark
+        date assessment_date
+    }
+
+    STREAK {
+        int streak_id
+        int current_streak
+    }
+
+    QUIZ {
+        int quiz_id
+        string title
+    }
+
+    QUESTION {
+        int question_id
+        string text
+    }
+```
+## Module Architecture
+
+```mermaid
+graph TD
+
+    Acadance
+
+    Acadance --> Authentication
+
+    Acadance --> AcademicTracking
+
+    Acadance --> Streaks
+
+    Acadance --> AIQuiz
+
+    Acadance --> Analytics
+
+    Acadance --> Voice
+
+    Authentication --> JWT
+
+    AcademicTracking --> Performance
+
+    AcademicTracking --> Subjects
+
+    AIQuiz --> Gemini
+
+    Analytics --> Prediction
+
+    Voice --> WebRTC
+```
 
 ## Roadmap
 
