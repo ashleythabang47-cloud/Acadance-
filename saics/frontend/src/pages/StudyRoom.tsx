@@ -24,6 +24,7 @@ export default function StudyRoom() {
   const { student, logout } = useAuth();
 
   const [sessionTitle, setSessionTitle] = useState("");
+  const [joinCode, setJoinCode] = useState("");
   const [remotePeers, setRemotePeers] = useState<RemotePeer[]>([]);
   const [muted, setMuted] = useState(false);
   const [connecting, setConnecting] = useState(true);
@@ -42,6 +43,7 @@ export default function StudyRoom() {
         const sessionRes = await api.get(`/study-sessions/${id}`);
         if (cancelled) return;
         setSessionTitle(sessionRes.data.session.title);
+        setJoinCode(sessionRes.data.session.join_code);
 
         // 2. Grab the mic.
         const localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -190,6 +192,11 @@ export default function StudyRoom() {
           <div>
             <p className="greeting-eyebrow">Live session</p>
             <h1>{sessionTitle || "Study Room"}</h1>
+            {joinCode && (
+              <p className="room-code-tag">
+                Invite code: <span className="mono">{joinCode}</span>
+              </p>
+            )}
           </div>
           <button className="logout-btn" onClick={handleLogout}>
             Log out
