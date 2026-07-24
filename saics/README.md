@@ -131,6 +131,14 @@ Runs on `http://localhost:5173` (or the next available port).
 
 Open the frontend URL, register an account, and you're in.
 
+## Testing
+
+```bash
+cd backend
+npm test
+```
+42 automated tests covering validation logic, the streak calculation rule, and controller behavior — all with mocked models and a mocked AI service, so no live database or API credits are needed to run them. See [TESTING.md](./TESTING.md) for full coverage details and the manual test checklist for the AI quiz and voice session features.
+
 ## API Reference
 
 | Method | Endpoint | Description | Auth required |
@@ -318,7 +326,7 @@ This project follows a phased build, matching the dissertation timeline:
 ### Improvements & To-Do
 - [x] Student profile setup (edit name, bio, academic year, avatar color, and subject enrollment)
 - [x] Human-friendly session IDs/codes for study sessions
-- [ ] Formal testing pass (unit tests for backend controllers/models, end-to-end flow testing)
+- [x] Formal testing pass — see [TESTING.md](./TESTING.md)
 
 ## Known Limitations
 

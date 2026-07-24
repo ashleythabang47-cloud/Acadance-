@@ -3,6 +3,7 @@ import { AuthRequest } from "../middleware/authMiddleware";
 import { QuizModel } from "../models/quizModel";
 import { StreakModel } from "../models/streakModel";
 import { generateQuizQuestions, gradeOpenEndedAnswer } from "../services/aiService";
+import { isMultipleChoiceCorrect } from "../utils/grading";
 
 export async function generateQuiz(req: AuthRequest, res: Response) {
   try {
@@ -101,9 +102,7 @@ export async function submitQuizAttempt(req: AuthRequest, res: Response) {
 
       if (question.question_type === "multiple_choice") {
         // Cheap, deterministic, no AI call needed.
-        isCorrect =
-          answer.studentAnswer.trim().toUpperCase() ===
-          (question.correct_answer || "").trim().toUpperCase();
+        isCorrect = isMultipleChoiceCorrect(answer.studentAnswer, question.correct_answer);
       } else {
         // Open-ended — worth an AI judgment call since exact-match would
         // unfairly mark differently-worded-but-correct answers wrong.

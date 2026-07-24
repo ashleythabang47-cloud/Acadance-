@@ -20,7 +20,7 @@ export interface GeneratedQuestion {
   option_d?: string;
 }
 
-function extractJson(text: string): string {
+export function extractJson(text: string): string {
   // Models sometimes wrap JSON in prose or code fences despite instructions —
   // pull out the first [...] block defensively rather than trusting raw output.
   const match = text.match(/\[[\s\S]*\]/);

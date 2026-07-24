@@ -1,5 +1,6 @@
 import { pool } from "../config/db";
 import { RowDataPacket, ResultSetHeader } from "mysql2";
+import { toDateString, computeNextStreak } from "../utils/streakLogic";
 
 export interface StreakInfo {
   current_streak: number;
@@ -10,16 +11,6 @@ export interface StreakInfo {
 export interface DayActivity {
   date: string;
   count: number;
-}
-
-function toDateString(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
-
-function daysBetween(a: string, b: string): number {
-  const dateA = new Date(a + "T00:00:00Z");
-  const dateB = new Date(b + "T00:00:00Z");
-  return Math.round((dateB.getTime() - dateA.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 export const StreakModel = {
@@ -59,28 +50,23 @@ export const StreakModel = {
       return { current_streak: 1, longest_streak: 1, last_activity_date: today };
     }
 
-    // Already recorded today — streak doesn't change further today.
-    if (existing.last_activity_date === today) {
+    const next = computeNextStreak(existing, today);
+    if (!next.changed) {
       return existing as StreakInfo;
     }
-
-    let newCurrent: number;
-    if (existing.last_activity_date) {
-      const gap = daysBetween(existing.last_activity_date, today);
-      newCurrent = gap === 1 ? existing.current_streak + 1 : 1;
-    } else {
-      newCurrent = 1;
-    }
-    const newLongest = Math.max(existing.longest_streak, newCurrent);
 
     await pool.query(
       `UPDATE streaks
        SET current_streak = ?, longest_streak = ?, last_activity_date = ?
        WHERE student_id = ?`,
-      [newCurrent, newLongest, today, studentId]
+      [next.current_streak, next.longest_streak, next.last_activity_date, studentId]
     );
 
-    return { current_streak: newCurrent, longest_streak: newLongest, last_activity_date: today };
+    return {
+      current_streak: next.current_streak,
+      longest_streak: next.longest_streak,
+      last_activity_date: next.last_activity_date,
+    };
   },
 
   async getStreakInfo(studentId: number): Promise<StreakInfo> {
