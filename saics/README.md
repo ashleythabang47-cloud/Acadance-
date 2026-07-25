@@ -30,13 +30,13 @@ The name reflects the core idea: **academic + cadence** — building a sustainab
 
 | Module | Status | Description |
 |---|---|---|
-| Authentication | Complete | Secure registration/login with hashed passwords and JWT sessions |
-| Academic Tracking | Complete | Log test/assignment results per subject, view trends on an interactive chart |
-| Streaks & Gamification | Complete | Real activity-based streak tracking (not a manual counter) — login, logging results, quizzes, and study sessions all count |
-| Voice Study Sessions | Complete | Real-time collaborative study rooms via WebRTC, joinable by link or a shareable 6-character code |
-| AI Quiz Generation | Complete | Quizzes generated from pasted study material via the Anthropic API, with AI-assisted grading of open-ended answers |
-| Student Profiles | Complete | Editable bio, academic year, avatar color, and subject enrollment |
-| Predictive Analytics | Planned | At-risk student identification from historical performance data |
+| Authentication | ✅ Complete | Secure registration/login with hashed passwords and JWT sessions |
+| Academic Tracking | ✅ Complete | Log test/assignment results per subject, view trends on an interactive chart |
+| Streaks & Gamification | ✅ Complete | Real activity-based streak tracking (not a manual counter) — login, logging results, quizzes, and study sessions all count |
+| Voice Study Sessions | ✅ Complete | Real-time collaborative study rooms via WebRTC, joinable by link or a shareable 6-character code |
+| AI Quiz Generation | ✅ Complete | Quizzes generated from pasted study material via the Anthropic API, with AI-assisted grading of open-ended answers |
+| Student Profiles | ✅ Complete | Editable bio, academic year, avatar color, and subject enrollment |
+| Predictive Analytics | 🔜 Planned | At-risk student identification from historical performance data |
 
 ## Tech Stack
 
@@ -56,7 +56,8 @@ acadance/
 │   │   ├── seed.sql                  # Optional sample subjects
 │   │   ├── phase3_streaks.sql        # Adds daily_activity table for streaks
 │   │   ├── phase_profile.sql         # Adds bio/academic_year/avatar_color to students
-│   │   └── phase_join_codes.sql      # Adds join_code to study_sessions
+│   │   ├── phase_join_codes.sql      # Adds join_code to study_sessions
+│   │   └── phase_avatar_upload.sql   # Adds avatar_url to students
 │   ├── src/
 │   │   ├── config/db.ts              # MySQL connection pool
 │   │   ├── models/                   # Database queries per entity
@@ -96,6 +97,7 @@ backend/database/seed.sql              (optional — sample subjects)
 backend/database/phase3_streaks.sql
 backend/database/phase_profile.sql
 backend/database/phase_join_codes.sql
+backend/database/phase_avatar_upload.sql
 ```
 
 ### 2. Backend
@@ -149,6 +151,8 @@ npm test
 | PUT | `/api/students/me` | Update profile (name, bio, academic year, avatar color) | Yes |
 | POST | `/api/students/me/subjects` | Enroll in a subject | Yes |
 | DELETE | `/api/students/me/subjects/:subjectId` | Unenroll from a subject | Yes |
+| POST | `/api/students/me/avatar` | Upload a profile photo (multipart/form-data) | Yes |
+| DELETE | `/api/students/me/avatar` | Remove uploaded photo, revert to color avatar | Yes |
 | GET | `/api/subjects` | List all subjects | Yes |
 | POST | `/api/subjects` | Create a subject | Yes |
 | GET | `/api/performance` | List the student's performance records | Yes |

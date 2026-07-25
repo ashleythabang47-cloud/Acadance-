@@ -1,5 +1,8 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
+import { useAuth } from "../context/AuthContext";
+
+const API_ORIGIN = "http://localhost:5000";
 
 const navItems = [
   { label: "Dashboard", path: "/dashboard", enabled: true },
@@ -14,10 +17,28 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
+  const { student } = useAuth();
+
+  const resolvedAvatarUrl = student?.avatarUrl ? `${API_ORIGIN}${student.avatarUrl}` : null;
 
   return (
     <aside className="sidebar">
       <div className="wordmark">Acadance</div>
+
+      <button className="sidebar-profile-snippet" onClick={() => navigate("/profile")}>
+        {resolvedAvatarUrl ? (
+          <img src={resolvedAvatarUrl} alt="" className="sidebar-avatar-img" />
+        ) : (
+          <div
+            className="sidebar-avatar-fallback"
+            style={{ background: student?.avatarColor || "#0e6e66" }}
+          >
+            {student?.fullName?.charAt(0).toUpperCase() || "?"}
+          </div>
+        )}
+        <span className="sidebar-profile-name">{student?.fullName?.split(" ")[0]}</span>
+      </button>
+
       <nav>
         {navItems.map((item) => (
           <span

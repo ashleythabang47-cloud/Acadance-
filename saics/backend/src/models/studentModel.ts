@@ -10,6 +10,7 @@ export interface Student {
   bio: string | null;
   academic_year: string | null;
   avatar_color: string;
+  avatar_url: string | null;
   created_at?: Date;
 }
 
@@ -32,7 +33,7 @@ export const StudentModel = {
 
   async findById(studentId: number): Promise<Student | null> {
     const [rows] = await pool.query<RowDataPacket[]>(
-      `SELECT student_id, full_name, email, role, bio, academic_year, avatar_color, created_at
+      `SELECT student_id, full_name, email, role, bio, academic_year, avatar_color, avatar_url, created_at
        FROM students WHERE student_id = ? LIMIT 1`,
       [studentId]
     );
@@ -46,10 +47,11 @@ export const StudentModel = {
       bio: string;
       academicYear: string;
       avatarColor: string;
+      avatarUrl: string | null;
     }>
   ): Promise<boolean> {
     const fields: string[] = [];
-    const values: (string | number)[] = [];
+    const values: (string | number | null)[] = [];
 
     if (updates.fullName !== undefined) {
       fields.push("full_name = ?");
@@ -66,6 +68,10 @@ export const StudentModel = {
     if (updates.avatarColor !== undefined) {
       fields.push("avatar_color = ?");
       values.push(updates.avatarColor);
+    }
+    if (updates.avatarUrl !== undefined) {
+      fields.push("avatar_url = ?");
+      values.push(updates.avatarUrl);
     }
 
     if (fields.length === 0) return false;

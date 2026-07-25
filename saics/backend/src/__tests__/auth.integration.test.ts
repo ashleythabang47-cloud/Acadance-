@@ -41,6 +41,7 @@ describe("POST /api/auth/register", () => {
       bio: null,
       academic_year: null,
       avatar_color: "#0e6e66",
+      avatar_url: null,
     });
 
     const res = await request(app)
@@ -93,6 +94,7 @@ describe("POST /api/auth/login", () => {
       bio: null,
       academic_year: null,
       avatar_color: "#0e6e66",
+      avatar_url: null,
     });
 
     const res = await request(app)
@@ -115,6 +117,7 @@ describe("POST /api/auth/login", () => {
       bio: null,
       academic_year: null,
       avatar_color: "#0e6e66",
+      avatar_url: null,
     });
 
     const res = await request(app)

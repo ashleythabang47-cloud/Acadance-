@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import path from "path";
 import authRoutes from "./routes/authRoutes";
 import studentRoutes from "./routes/studentRoutes";
 import subjectRoutes from "./routes/subjectRoutes";
@@ -12,6 +13,9 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// Serves uploaded avatar images (e.g. /uploads/avatars/3-1721234567890.jpg)
+app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 
 // Health check
 app.get("/api/health", (_req, res) => {

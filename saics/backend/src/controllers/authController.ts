@@ -76,6 +76,8 @@ export async function login(req: Request, res: Response) {
         studentId: student.student_id,
         fullName: student.full_name,
         email: student.email,
+        avatarColor: student.avatar_color,
+        avatarUrl: student.avatar_url,
       },
     });
   } catch (err) {

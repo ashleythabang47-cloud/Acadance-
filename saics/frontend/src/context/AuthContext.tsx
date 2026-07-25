@@ -5,6 +5,8 @@ interface Student {
   studentId: number;
   fullName: string;
   email: string;
+  avatarUrl?: string | null;
+  avatarColor?: string;
 }
 
 interface AuthContextType {

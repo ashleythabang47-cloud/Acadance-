@@ -315,6 +315,51 @@ a {
   font-weight: 600;
 }
 
+.sidebar-profile-snippet {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 8px 10px;
+  cursor: pointer;
+  margin-top: -12px;
+  text-align: left;
+}
+
+.sidebar-profile-snippet:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.sidebar-avatar-img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.sidebar-avatar-fallback {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-family: "Fraunces", serif;
+  font-size: 14px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.sidebar-profile-name {
+  color: #f4efe4;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
 .sidebar nav {
   display: flex;
   flex-direction: column;
@@ -837,6 +882,101 @@ a {
   background: var(--teal-tint);
   border-color: var(--teal);
   color: var(--teal-deep);
+}
+
+/* ---------- Profile page (modern layout) ---------- */
+.profile-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 760px) {
+  .profile-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.profile-photo-card {
+  text-align: center;
+  padding: 32px 24px;
+}
+
+.avatar-dropzone {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto;
+  border-radius: 50%;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.avatar-dropzone.drag-active {
+  box-shadow: 0 0 0 3px var(--teal), 0 0 0 6px var(--teal-tint);
+}
+
+.avatar-dropzone .profile-avatar {
+  width: 120px;
+  height: 120px;
+  font-size: 42px;
+}
+
+.avatar-image {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.avatar-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(20, 20, 28, 0.6);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.avatar-dropzone:hover .avatar-overlay,
+.avatar-dropzone.drag-active .avatar-overlay {
+  opacity: 1;
+}
+
+.remove-photo-link {
+  display: inline-block;
+  margin-top: 10px;
+  background: none;
+  border: none;
+  color: var(--brick);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.remove-photo-link:hover {
+  text-decoration: underline;
+}
+
+.avatar-color-label {
+  margin: 14px 0 8px;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.profile-main-col {
+  min-width: 0;
 }
 
 /* ---------- Join codes ---------- */

@@ -1,7 +1,10 @@
 import { Response } from "express";
+import path from "path";
+import fs from "fs";
 import { AuthRequest } from "../middleware/authMiddleware";
 import { StudentModel } from "../models/studentModel";
 import { SubjectModel } from "../models/subjectModel";
+import { UPLOAD_DIR } from "../config/upload";
 
 export async function getMyProfile(req: AuthRequest, res: Response) {
   try {
@@ -72,5 +75,57 @@ export async function unenrollFromSubject(req: AuthRequest, res: Response) {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Server error unenrolling from subject." });
+  }
+}
+
+// Best-effort deletion of an old avatar file — never lets a filesystem
+// error interrupt the actual profile update, just logs and moves on.
+function deleteAvatarFileIfExists(avatarUrl: string | null) {
+  if (!avatarUrl) return;
+  const filename = path.basename(avatarUrl);
+  const filePath = path.join(UPLOAD_DIR, filename);
+  fs.unlink(filePath, (err) => {
+    if (err && err.code !== "ENOENT") {
+      console.error("Failed to delete old avatar file:", err);
+    }
+  });
+}
+
+export async function uploadAvatar(req: AuthRequest, res: Response) {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No image file was uploaded." });
+    }
+
+    const existing = await StudentModel.findById(req.studentId!);
+    const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+
+    await StudentModel.updateProfile(req.studentId!, { avatarUrl });
+
+    // Clean up the previous file now that the new one is saved and recorded.
+    if (existing?.avatar_url) {
+      deleteAvatarFileIfExists(existing.avatar_url);
+    }
+
+    return res.status(200).json({ message: "Avatar updated.", avatarUrl });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Server error uploading avatar." });
+  }
+}
+
+export async function removeAvatar(req: AuthRequest, res: Response) {
+  try {
+    const existing = await StudentModel.findById(req.studentId!);
+    await StudentModel.updateProfile(req.studentId!, { avatarUrl: null });
+
+    if (existing?.avatar_url) {
+      deleteAvatarFileIfExists(existing.avatar_url);
+    }
+
+    return res.status(200).json({ message: "Avatar removed." });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Server error removing avatar." });
   }
 }
