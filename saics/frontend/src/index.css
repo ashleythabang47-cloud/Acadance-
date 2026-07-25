@@ -22,6 +22,35 @@
   --shadow: 0 2px 4px rgba(28, 27, 41, 0.04), 0 8px 24px rgba(28, 27, 41, 0.06);
 }
 
+[data-theme="dark"] {
+  --paper: #14141c;
+  --surface: #1d1e29;
+  --ink: #f2f0ea;
+  --ink-soft: #a6a3b8;
+  --line: #33313f;
+
+  --teal: #2bb3a6;
+  --teal-deep: #0a4f49;
+  --teal-tint: rgba(43, 179, 166, 0.16);
+
+  --amber: #eab868;
+  --amber-tint: rgba(234, 184, 104, 0.16);
+
+  --brick: #e2794f;
+  --brick-tint: rgba(226, 121, 79, 0.16);
+
+  --shadow: 0 2px 4px rgba(0, 0, 0, 0.25), 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+body,
+.card,
+.auth-card input,
+.performance-form input,
+.performance-form select,
+.performance-form textarea {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -276,6 +305,10 @@ a {
   gap: 32px;
 }
 
+.sidebar nav {
+  flex: 1;
+}
+
 .sidebar .wordmark {
   font-family: "Fraunces", serif;
   font-size: 20px;
@@ -311,6 +344,29 @@ a {
 .sidebar nav .nav-item.disabled {
   opacity: 0.45;
   cursor: default;
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cfe4e1;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-family: "Inter", sans-serif;
+  cursor: pointer;
+}
+
+.theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.theme-toggle svg {
+  flex-shrink: 0;
 }
 
 .card[role="button"] {
