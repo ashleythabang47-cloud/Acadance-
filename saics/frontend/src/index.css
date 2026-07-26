@@ -405,6 +405,195 @@ a {
   justify-content: space-between;
 }
 
+.sidebar-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ---------- Notification bell + dropdown ---------- */
+.notification-bell-wrapper {
+  position: relative;
+}
+
+.notification-bell-trigger {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f4efe4;
+  cursor: pointer;
+}
+
+.notification-bell-trigger:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.notification-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--brick);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: "IBM Plex Mono", monospace;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.notification-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  width: 300px;
+  max-height: 380px;
+  background: var(--surface);
+  color: var(--ink);
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--line);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.notification-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.mark-all-read-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  color: var(--teal);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mark-all-read-btn:hover {
+  text-decoration: underline;
+}
+
+.notification-list {
+  overflow-y: auto;
+  max-height: 320px;
+}
+
+.notification-loading {
+  padding: 20px;
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.notification-item {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border: none;
+  border-left: 3px solid transparent;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  border-bottom: 1px solid var(--line);
+  position: relative;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notification-item:hover {
+  background: var(--paper);
+}
+
+.notification-item.unread {
+  background: var(--teal-tint);
+}
+
+.notification-item.alert {
+  border-left-color: var(--brick);
+}
+
+.notification-item.reminder {
+  border-left-color: var(--amber);
+}
+
+.notification-item.suggestion {
+  border-left-color: var(--teal);
+}
+
+.notification-item-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--ink-soft);
+}
+
+.notification-item.alert .notification-item-icon {
+  color: var(--brick);
+}
+
+.notification-item.reminder .notification-item-icon {
+  color: var(--amber);
+}
+
+.notification-item.suggestion .notification-item-icon {
+  color: var(--teal);
+}
+
+.notification-message {
+  margin: 0 0 4px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.notification-item.read .notification-message {
+  color: var(--ink-soft);
+}
+
+.notification-time {
+  margin: 0;
+  font-size: 11px;
+  color: var(--ink-soft);
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.unread-dot {
+  position: absolute;
+  top: 14px;
+  right: 12px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--teal);
+}
+
 .sidebar {
   background: var(--teal-deep);
   color: #f4efe4;

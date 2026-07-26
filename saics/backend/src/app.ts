@@ -8,6 +8,7 @@ import performanceRoutes from "./routes/performanceRoutes";
 import streakRoutes from "./routes/streakRoutes";
 import studySessionRoutes from "./routes/studySessionRoutes";
 import quizRoutes from "./routes/quizRoutes";
+import notificationRoutes from "./routes/notificationRoutes";
 
 const app = express();
 
@@ -29,5 +30,6 @@ app.use("/api/performance", performanceRoutes);
 app.use("/api/streaks", streakRoutes);
 app.use("/api/study-sessions", studySessionRoutes);
 app.use("/api/quizzes", quizRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 export default app;

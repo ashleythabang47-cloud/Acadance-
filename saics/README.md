@@ -30,13 +30,14 @@ The name reflects the core idea: **academic + cadence** — building a sustainab
 
 | Module | Status | Description |
 |---|---|---|
-| Authentication | Complete | Secure registration/login with hashed passwords and JWT sessions |
-| Academic Tracking | Complete | Log test/assignment results per subject, view trends on an interactive chart |
-| Streaks & Gamification | Complete | Real activity-based streak tracking (not a manual counter) — login, logging results, quizzes, and study sessions all count |
-| Voice Study Sessions | Complete | Real-time collaborative study rooms via WebRTC, joinable by link or a shareable 6-character code |
-| AI Quiz Generation | Complete | Quizzes generated from pasted study material via the Anthropic API, with AI-assisted grading of open-ended answers |
-| Student Profiles | Complete | Editable bio, academic year, avatar color, and subject enrollment |
-| Predictive Analytics | Planned | At-risk student identification from historical performance data |
+| Authentication | ✅ Complete | Secure registration/login with hashed passwords and JWT sessions |
+| Academic Tracking | ✅ Complete | Log test/assignment results per subject, view trends on an interactive chart |
+| Streaks & Gamification | ✅ Complete | Real activity-based streak tracking (not a manual counter) — login, logging results, quizzes, and study sessions all count |
+| Voice Study Sessions | ✅ Complete | Real-time collaborative study rooms via WebRTC, joinable by link or a shareable 6-character code |
+| AI Quiz Generation | ✅ Complete | Quizzes generated from pasted study material via the Anthropic API, with AI-assisted grading of open-ended answers |
+| Student Profiles | ✅ Complete | Editable bio, academic year, avatar color, and subject enrollment |
+| Notifications & Recommendations | ✅ Complete | Rules-based alerts for low scores, streak-reset reminders, and quiz-retry suggestions — triggered by real activity, not manually created |
+| Predictive Analytics | 🔜 Planned | At-risk student identification from historical performance data |
 
 ## Tech Stack
 
@@ -139,7 +140,7 @@ Open the frontend URL, register an account, and you're in.
 cd backend
 npm test
 ```
-42 automated tests covering validation logic, the streak calculation rule, and controller behavior — all with mocked models and a mocked AI service, so no live database or API credits are needed to run them. See [TESTING.md](./TESTING.md) for full coverage details and the manual test checklist for the AI quiz and voice session features.
+48 automated tests covering validation logic, the streak calculation rule, controller behavior, and the notification/recommendation triggers — all with mocked models and a mocked AI service, so no live database or API credits are needed to run them. See [TESTING.md](./TESTING.md) for full coverage details and the manual test checklist for the AI quiz and voice session features.
 
 ## API Reference
 
@@ -153,6 +154,9 @@ npm test
 | DELETE | `/api/students/me/subjects/:subjectId` | Unenroll from a subject | Yes |
 | POST | `/api/students/me/avatar` | Upload a profile photo (multipart/form-data) | Yes |
 | DELETE | `/api/students/me/avatar` | Remove uploaded photo, revert to color avatar | Yes |
+| GET | `/api/notifications` | List recent notifications + unread count | Yes |
+| POST | `/api/notifications/:id/read` | Mark one notification as read | Yes |
+| POST | `/api/notifications/read-all` | Mark all notifications as read | Yes |
 | GET | `/api/subjects` | List all subjects | Yes |
 | POST | `/api/subjects` | Create a subject | Yes |
 | GET | `/api/performance` | List the student's performance records | Yes |

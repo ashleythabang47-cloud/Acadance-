@@ -2,6 +2,11 @@ import { Response } from "express";
 import { AuthRequest } from "../middleware/authMiddleware";
 import { PerformanceModel } from "../models/performanceModel";
 import { StreakModel } from "../models/streakModel";
+import { NotificationModel } from "../models/notificationModel";
+import { SubjectModel } from "../models/subjectModel";
+
+// Below this percentage, a performance record triggers a low-score alert.
+const LOW_SCORE_THRESHOLD = 50;
 
 export async function listMyPerformance(req: AuthRequest, res: Response) {
   try {
@@ -47,6 +52,19 @@ export async function createPerformanceRecord(req: AuthRequest, res: Response) {
 
     // Logging a result is a countable study activity.
     await StreakModel.recordActivity(req.studentId!);
+
+    // Rules-based recommendation: flag results below the threshold so the
+    // student sees it without having to notice the trend themselves.
+    const percentage = (numericScore / numericMaxScore) * 100;
+    if (percentage < LOW_SCORE_THRESHOLD) {
+      const subject = await SubjectModel.findById(Number(subjectId));
+      const subjectName = subject?.subject_name || "this subject";
+      await NotificationModel.create(
+        req.studentId!,
+        `Your score on "${assessmentName}" was ${Math.round(percentage)}% — consider reviewing ${subjectName} or generating a practice quiz.`,
+        "alert"
+      );
+    }
 
     return res.status(201).json({ message: "Record added.", recordId });
   } catch (err) {

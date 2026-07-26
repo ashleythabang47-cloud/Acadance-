@@ -4,6 +4,9 @@ import { QuizModel } from "../models/quizModel";
 import { StreakModel } from "../models/streakModel";
 import { generateQuizQuestions, gradeOpenEndedAnswer } from "../services/aiService";
 import { isMultipleChoiceCorrect } from "../utils/grading";
+import { NotificationModel } from "../models/notificationModel";
+
+const LOW_QUIZ_SCORE_THRESHOLD = 50;
 
 export async function generateQuiz(req: AuthRequest, res: Response) {
   try {
@@ -128,6 +131,16 @@ export async function submitQuizAttempt(req: AuthRequest, res: Response) {
 
     await QuizModel.completeAttempt(attemptId, correctCount, answers.length);
     await StreakModel.recordActivity(req.studentId!);
+
+    const percentage = (correctCount / answers.length) * 100;
+    if (percentage < LOW_QUIZ_SCORE_THRESHOLD) {
+      const quiz = await QuizModel.findById(quizId);
+      await NotificationModel.create(
+        req.studentId!,
+        `You scored ${Math.round(percentage)}% on "${quiz?.title || "a recent quiz"}" — want to try another quiz on the same material to reinforce it?`,
+        "suggestion"
+      );
+    }
 
     return res.status(200).json({
       score: correctCount,

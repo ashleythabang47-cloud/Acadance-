@@ -3,6 +3,8 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { StudentModel } from "../models/studentModel";
 import { StreakModel } from "../models/streakModel";
+import { NotificationModel } from "../models/notificationModel";
+import { toDateString, daysBetween } from "../utils/streakLogic";
 
 const JWT_SECRET = process.env.JWT_SECRET || "dev_secret_change_me";
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
@@ -65,6 +67,22 @@ export async function login(req: Request, res: Response) {
       JWT_SECRET,
       { expiresIn: JWT_EXPIRES_IN } as jwt.SignOptions
     );
+
+    // Check for a lapsed streak BEFORE today's login counts as new activity —
+    // only worth telling someone their streak broke if they actually had
+    // one going (a first-ever login shouldn't trigger this).
+    const beforeLogin = await StreakModel.getStreakInfo(student.student_id);
+    if (beforeLogin.last_activity_date) {
+      const today = toDateString(new Date());
+      const gap = daysBetween(beforeLogin.last_activity_date, today);
+      if (gap > 1 && beforeLogin.current_streak > 1) {
+        await NotificationModel.create(
+          student.student_id,
+          `Your ${beforeLogin.current_streak}-day streak reset after a break — no worries, today's a fresh start.`,
+          "reminder"
+        );
+      }
+    }
 
     // Logging in counts as daily activity for streak purposes.
     await StreakModel.recordActivity(student.student_id);

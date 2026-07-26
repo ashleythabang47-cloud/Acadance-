@@ -8,7 +8,7 @@ cd backend
 npm test
 ```
 
-42 tests across 6 suites, all using mocked models and a mocked AI service —
+48 tests across 6 suites, all using mocked models and a mocked AI service —
 **no live database connection or Anthropic API credits are required** to run
 these.
 
@@ -17,9 +17,9 @@ these.
 | `grading.test.ts` | Pure logic: MCQ answer comparison, percentage calculation, score validation |
 | `streakLogic.test.ts` | The streak rule itself — extending on consecutive days, resetting after a gap, not double-counting same-day activity, preserving longest streak |
 | `aiService.test.ts` | Defensive JSON extraction from AI responses (handles prose wrapping, markdown fences) |
-| `auth.integration.test.ts` | Register/login validation, duplicate email rejection, wrong-password rejection, successful token issuance |
-| `performance.integration.test.ts` | Auth requirement, score validation (negative, over max), successful record creation |
-| `quiz.integration.test.ts` | Study-text length validation, quiz generation (AI mocked), MCQ grading (confirms **no AI call** is made), short-answer grading (confirms AI **is** called) |
+| `auth.integration.test.ts` | Register/login validation, duplicate email rejection, wrong-password rejection, successful token issuance, streak-reset reminder notification (and that it does NOT fire when the streak is still active) |
+| `performance.integration.test.ts` | Auth requirement, score validation (negative, over max), successful record creation, low-score alert notification (and that it does NOT fire for a passing score) |
+| `quiz.integration.test.ts` | Study-text length validation, quiz generation (AI mocked), MCQ grading (confirms **no AI call** is made), short-answer grading (confirms AI **is** called), low-score suggestion notification (and that it does NOT fire for a passing score) |
 
 That last point in `quiz.integration.test.ts` is worth calling out specifically
 in a dissertation testing section: the tests assert not just that grading

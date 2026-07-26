@@ -3,14 +3,17 @@ import app from "../app";
 import jwt from "jsonwebtoken";
 import { QuizModel } from "../models/quizModel";
 import { StreakModel } from "../models/streakModel";
+import { NotificationModel } from "../models/notificationModel";
 import * as aiService from "../services/aiService";
 
 jest.mock("../models/quizModel");
 jest.mock("../models/streakModel");
+jest.mock("../models/notificationModel");
 jest.mock("../services/aiService");
 
 const mockedQuizModel = QuizModel as jest.Mocked<typeof QuizModel>;
 const mockedStreakModel = StreakModel as jest.Mocked<typeof StreakModel>;
+const mockedNotificationModel = NotificationModel as jest.Mocked<typeof NotificationModel>;
 const mockedAiService = aiService as jest.Mocked<typeof aiService>;
 
 const JWT_SECRET = process.env.JWT_SECRET || "dev_secret_change_me";
@@ -126,5 +129,67 @@ describe("POST /api/quizzes/:id/submit", () => {
     expect(res.status).toBe(200);
     expect(res.body.score).toBe(1);
     expect(mockedAiService.gradeOpenEndedAnswer).toHaveBeenCalledTimes(1);
+  });
+
+  it("does NOT create a notification for a passing quiz score", async () => {
+    mockedQuizModel.getQuestionsWithAnswers.mockResolvedValue([
+      {
+        question_id: 3,
+        quiz_id: 55,
+        question_text: "2+2?",
+        question_type: "multiple_choice",
+        correct_answer: "B",
+        option_a: "3",
+        option_b: "4",
+        option_c: "5",
+        option_d: "6",
+      },
+    ]);
+    mockedQuizModel.createAttempt.mockResolvedValue(202);
+
+    await request(app)
+      .post("/api/quizzes/55/submit")
+      .set("Authorization", `Bearer ${authToken}`)
+      .send({ answers: [{ questionId: 3, studentAnswer: "B" }] });
+
+    expect(mockedNotificationModel.create).not.toHaveBeenCalled();
+  });
+
+  it("creates a suggestion notification when the quiz score is below the threshold", async () => {
+    mockedQuizModel.getQuestionsWithAnswers.mockResolvedValue([
+      {
+        question_id: 4,
+        quiz_id: 55,
+        question_text: "2+2?",
+        question_type: "multiple_choice",
+        correct_answer: "B",
+        option_a: "3",
+        option_b: "4",
+        option_c: "5",
+        option_d: "6",
+      },
+    ]);
+    mockedQuizModel.createAttempt.mockResolvedValue(203);
+    mockedQuizModel.findById.mockResolvedValue({
+      quiz_id: 55,
+      subject_id: 1,
+      title: "Databases Quiz",
+      difficulty: "medium",
+      created_by: 1,
+      created_at: "2026-07-20",
+    });
+
+    const res = await request(app)
+      .post("/api/quizzes/55/submit")
+      .set("Authorization", `Bearer ${authToken}`)
+      // Wrong answer on the only question — 0% score, below the 50% threshold.
+      .send({ answers: [{ questionId: 4, studentAnswer: "A" }] });
+
+    expect(res.status).toBe(200);
+    expect(mockedNotificationModel.create).toHaveBeenCalledTimes(1);
+    const [studentId, message, type] = mockedNotificationModel.create.mock.calls[0];
+    expect(studentId).toBe(1);
+    expect(message).toContain("Databases Quiz");
+    expect(type).toBe("suggestion");
   });
 });

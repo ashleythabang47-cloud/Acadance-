@@ -23,6 +23,14 @@ export const SubjectModel = {
     return (rows[0] as Subject) || null;
   },
 
+  async findById(subjectId: number): Promise<Subject | null> {
+    const [rows] = await pool.query<RowDataPacket[]>(
+      `SELECT * FROM subjects WHERE subject_id = ? LIMIT 1`,
+      [subjectId]
+    );
+    return (rows[0] as Subject) || null;
+  },
+
   async create(subjectName: string, subjectCode: string): Promise<number> {
     const [result] = await pool.query<ResultSetHeader>(
       `INSERT INTO subjects (subject_name, subject_code) VALUES (?, ?)`,

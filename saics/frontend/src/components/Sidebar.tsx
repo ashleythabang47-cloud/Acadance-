@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
+import NotificationBell from "./NotificationBell";
 
 const API_ORIGIN = "http://localhost:5000";
 
@@ -59,13 +60,16 @@ export default function Sidebar() {
       <aside className={`sidebar ${mobileOpen ? "mobile-open" : ""}`}>
         <div className="sidebar-top-row">
           <div className="wordmark">Acadance</div>
-          <button
-            className="mobile-close-trigger"
-            onClick={() => setMobileOpen(false)}
-            aria-label="Close menu"
-          >
-            <X size={20} />
-          </button>
+          <div className="sidebar-top-actions">
+            <NotificationBell />
+            <button
+              className="mobile-close-trigger"
+              onClick={() => setMobileOpen(false)}
+              aria-label="Close menu"
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         <button className="sidebar-profile-snippet" onClick={() => go("/profile")}>
