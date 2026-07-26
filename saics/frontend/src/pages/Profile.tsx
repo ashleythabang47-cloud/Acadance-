@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, ChangeEvent, DragEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import { LogOut, Save, Trash2, Check } from "lucide-react";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import Sidebar from "../components/Sidebar";
+import Spinner from "../components/Spinner";
 
 interface Subject {
   subject_id: number;
@@ -192,6 +194,7 @@ export default function Profile() {
             <h1>Profile</h1>
           </div>
           <button className="logout-btn" onClick={handleLogout}>
+            <LogOut size={15} />
             Log out
           </button>
         </header>
@@ -199,7 +202,7 @@ export default function Profile() {
         {error && <div className="error-banner" style={{ marginBottom: 20 }}>{error}</div>}
 
         {loading ? (
-          <p>Loading...</p>
+          <Spinner label="Loading your profile..." />
         ) : (
           <div className="profile-layout">
             <div className="card profile-photo-card">
@@ -257,6 +260,7 @@ export default function Profile() {
 
               {resolvedAvatarUrl && (
                 <button type="button" className="remove-photo-link" onClick={handleRemovePhoto}>
+                  <Trash2 size={12} />
                   Remove photo
                 </button>
               )}
@@ -315,7 +319,19 @@ export default function Profile() {
                   />
 
                   <button type="submit" disabled={saving}>
-                    {saving ? "Saving..." : saved ? "Saved ✓" : "Save changes"}
+                    {saving ? (
+                      <Spinner label="Saving..." />
+                    ) : saved ? (
+                      <>
+                        <Check size={15} />
+                        Saved
+                      </>
+                    ) : (
+                      <>
+                        <Save size={15} />
+                        Save changes
+                      </>
+                    )}
                   </button>
                 </form>
               </div>

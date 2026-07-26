@@ -1,9 +1,11 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { UserPlus } from "lucide-react";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import BarField from "../components/BarField";
+import Spinner from "../components/Spinner";
 
 export default function Register() {
   const [fullName, setFullName] = useState("");
@@ -80,7 +82,7 @@ export default function Register() {
           />
 
           <button type="submit" disabled={loading}>
-            {loading ? "Creating account..." : "Register"}
+            {loading ? <Spinner label="Creating account..." /> : <><UserPlus size={16} /> Register</>}
           </button>
 
           <p className="switch-link">

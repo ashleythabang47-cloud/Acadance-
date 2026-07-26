@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router-dom";
+import { LineChart, BookOpenCheck, Mic, Flame, LogOut } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import Sidebar from "../components/Sidebar";
+import Spinner from "../components/Spinner";
 import { useStreak } from "../hooks/useStreak";
 
 export default function Dashboard() {
@@ -31,24 +33,28 @@ export default function Dashboard() {
             <h1>Hi, {student?.fullName?.split(" ")[0]} 👋</h1>
           </div>
           <button className="logout-btn" onClick={handleLogout}>
+            <LogOut size={15} />
             Log out
           </button>
         </header>
 
         <div className="card-grid">
           <div className="card" onClick={() => navigate("/performance")} role="button">
+            <div className="card-icon-badge"><LineChart size={18} /></div>
             <h3>Performance</h3>
             <p>Track your test and assignment scores here.</p>
             <span className="placeholder-tag">View</span>
           </div>
 
           <div className="card" onClick={() => navigate("/quizzes")} role="button">
+            <div className="card-icon-badge"><BookOpenCheck size={18} /></div>
             <h3>Quizzes</h3>
             <p>AI-generated quizzes based on your study material.</p>
             <span className="placeholder-tag">View</span>
           </div>
 
           <div className="card" onClick={() => navigate("/study-sessions")} role="button">
+            <div className="card-icon-badge"><Mic size={18} /></div>
             <h3>Study Sessions</h3>
             <p>Join voice-based collaborative study rooms.</p>
             <span className="placeholder-tag">View</span>
@@ -59,9 +65,10 @@ export default function Dashboard() {
             onClick={() => navigate("/streak")}
             role="button"
           >
+            <div className="card-icon-badge card-icon-amber"><Flame size={18} /></div>
             <h3>Streak</h3>
             {streakLoading ? (
-              <p>Loading...</p>
+              <Spinner />
             ) : (
               <>
                 <div className="cadence-bars">

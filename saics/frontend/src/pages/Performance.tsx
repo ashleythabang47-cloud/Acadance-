@@ -10,9 +10,12 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { Plus, Trash2, ClipboardList, LogOut } from "lucide-react";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import Sidebar from "../components/Sidebar";
+import Spinner from "../components/Spinner";
+import EmptyState from "../components/EmptyState";
 
 interface Subject {
   subject_id: number;
@@ -128,6 +131,7 @@ export default function Performance() {
             <h1>Performance</h1>
           </div>
           <button className="logout-btn" onClick={handleLogout}>
+            <LogOut size={15} />
             Log out
           </button>
         </header>
@@ -196,7 +200,7 @@ export default function Performance() {
             </div>
 
             <button type="submit" disabled={submitting}>
-              {submitting ? "Adding..." : "Add result"}
+              {submitting ? <Spinner label="Adding..." /> : <><Plus size={15} /> Add result</>}
             </button>
           </form>
         </div>
@@ -232,9 +236,9 @@ export default function Performance() {
         <div className="card">
           <h3>All results</h3>
           {loading ? (
-            <p>Loading...</p>
+            <Spinner label="Loading your results..." />
           ) : records.length === 0 ? (
-            <p>No results yet — add your first one above.</p>
+            <EmptyState icon={ClipboardList} message="No results yet — add your first one above." />
           ) : (
             <table className="records-table">
               <thead>
@@ -263,6 +267,7 @@ export default function Performance() {
                         onClick={() => handleDelete(r.record_id)}
                         aria-label={`Delete ${r.assessment_name}`}
                       >
+                        <Trash2 size={13} />
                         Delete
                       </button>
                     </td>

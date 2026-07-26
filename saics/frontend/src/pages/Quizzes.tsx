@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import { Sparkles, BookOpenCheck, ArrowRight, LogOut } from "lucide-react";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import Sidebar from "../components/Sidebar";
+import Spinner from "../components/Spinner";
+import EmptyState from "../components/EmptyState";
 
 interface Subject {
   subject_id: number;
@@ -94,6 +97,7 @@ export default function Quizzes() {
             <h1>Quizzes</h1>
           </div>
           <button className="logout-btn" onClick={handleLogout}>
+            <LogOut size={15} />
             Log out
           </button>
         </header>
@@ -164,7 +168,14 @@ export default function Quizzes() {
             </div>
 
             <button type="submit" disabled={generating}>
-              {generating ? "Generating with AI..." : "Generate quiz"}
+              {generating ? (
+                <Spinner label="Generating with AI..." />
+              ) : (
+                <>
+                  <Sparkles size={15} />
+                  Generate quiz
+                </>
+              )}
             </button>
           </form>
         </div>
@@ -172,9 +183,12 @@ export default function Quizzes() {
         <div className="card">
           <h3>Available quizzes</h3>
           {loading ? (
-            <p>Loading...</p>
+            <Spinner label="Loading quizzes..." />
           ) : quizzes.length === 0 ? (
-            <p>No quizzes yet — generate your first one above.</p>
+            <EmptyState
+              icon={BookOpenCheck}
+              message="No quizzes yet — generate your first one above."
+            />
           ) : (
             <div className="session-list">
               {quizzes.map((q) => (
@@ -187,6 +201,7 @@ export default function Quizzes() {
                   </div>
                   <button className="join-btn" onClick={() => navigate(`/quizzes/${q.quiz_id}`)}>
                     Take quiz
+                    <ArrowRight size={14} />
                   </button>
                 </div>
               ))}

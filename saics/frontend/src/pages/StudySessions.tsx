@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import { Mic, KeyRound, PlusCircle, LogIn, LogOut, Users } from "lucide-react";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import Sidebar from "../components/Sidebar";
+import Spinner from "../components/Spinner";
+import EmptyState from "../components/EmptyState";
 
 interface Subject {
   subject_id: number;
@@ -118,6 +121,7 @@ export default function StudySessions() {
             <h1>Study Sessions</h1>
           </div>
           <button className="logout-btn" onClick={handleLogout}>
+            <LogOut size={15} />
             Log out
           </button>
         </header>
@@ -132,6 +136,7 @@ export default function StudySessions() {
 
         <div className="two-col-row">
           <div className="card">
+            <div className="card-icon-badge"><Mic size={18} /></div>
             <h3>Start a new session</h3>
             <form onSubmit={handleCreate} className="performance-form">
               <label>Session title</label>
@@ -154,7 +159,7 @@ export default function StudySessions() {
               </select>
 
               <button type="submit" disabled={creating}>
-                {creating ? "Starting..." : "Start session"}
+                {creating ? <Spinner label="Starting..." /> : <><PlusCircle size={15} /> Start session</>}
               </button>
             </form>
           </div>
@@ -176,7 +181,7 @@ export default function StudySessions() {
                 required
               />
               <button type="submit" disabled={joiningByCode}>
-                {joiningByCode ? "Joining..." : "Join session"}
+                {joiningByCode ? <Spinner label="Joining..." /> : <><KeyRound size={15} /> Join session</>}
               </button>
             </form>
           </div>
@@ -185,9 +190,9 @@ export default function StudySessions() {
         <div className="card" style={{ marginTop: 24 }}>
           <h3>Active sessions</h3>
           {loading ? (
-            <p>Loading...</p>
+            <Spinner label="Loading sessions..." />
           ) : sessions.length === 0 ? (
-            <p>No active sessions right now — start one above.</p>
+            <EmptyState icon={Users} message="No active sessions right now — start one above." />
           ) : (
             <div className="session-list">
               {sessions.map((s) => (
@@ -202,6 +207,7 @@ export default function StudySessions() {
                     </p>
                   </div>
                   <button className="join-btn" onClick={() => handleJoin(s.session_id)}>
+                    <LogIn size={14} />
                     Join
                   </button>
                 </div>

@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { CheckCircle2, XCircle, Send, ArrowLeft, LogOut, Trophy } from "lucide-react";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import Sidebar from "../components/Sidebar";
+import Spinner from "../components/Spinner";
 
 interface Question {
   question_id: number;
@@ -95,6 +97,7 @@ export default function TakeQuiz() {
             <h1>{quizTitle || "Loading..."}</h1>
           </div>
           <button className="logout-btn" onClick={handleLogout}>
+            <LogOut size={15} />
             Log out
           </button>
         </header>
@@ -102,10 +105,11 @@ export default function TakeQuiz() {
         {error && <div className="error-banner" style={{ marginBottom: 20 }}>{error}</div>}
 
         {loading ? (
-          <p>Loading...</p>
+          <Spinner label="Loading quiz..." />
         ) : result ? (
           <div className="card">
-            <h3>
+            <h3 className="quiz-score-heading">
+              <Trophy size={20} />
               Score: {result.score}/{result.maxScore}
             </h3>
             <div className="quiz-results">
@@ -116,7 +120,14 @@ export default function TakeQuiz() {
                     key={q.question_id}
                     className={`result-item ${r?.isCorrect ? "correct" : "incorrect"}`}
                   >
-                    <p className="result-question">{q.question_text}</p>
+                    <p className="result-question">
+                      {r?.isCorrect ? (
+                        <CheckCircle2 size={16} className="result-icon correct-icon" />
+                      ) : (
+                        <XCircle size={16} className="result-icon incorrect-icon" />
+                      )}
+                      {q.question_text}
+                    </p>
                     <p className="result-your-answer mono">
                       Your answer: {answers[q.question_id] || "(blank)"}
                     </p>
@@ -131,11 +142,12 @@ export default function TakeQuiz() {
               })}
             </div>
             <button className="join-btn" style={{ marginTop: 16 }} onClick={() => navigate("/quizzes")}>
+              <ArrowLeft size={14} />
               Back to quizzes
             </button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="card">
+          <form onSubmit={handleSubmit} className="card performance-form">
             {questions.map((q, i) => (
               <div key={q.question_id} className="quiz-question-block">
                 <p className="quiz-question-number">Question {i + 1}</p>
@@ -173,7 +185,14 @@ export default function TakeQuiz() {
               </div>
             ))}
             <button type="submit" disabled={submitting}>
-              {submitting ? "Grading with AI..." : "Submit answers"}
+              {submitting ? (
+                <Spinner label="Grading with AI..." />
+              ) : (
+                <>
+                  <Send size={15} />
+                  Submit answers
+                </>
+              )}
             </button>
           </form>
         )}

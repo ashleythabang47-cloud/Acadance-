@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router-dom";
+import { Flame, Trophy, CalendarCheck, LogOut } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import Sidebar from "../components/Sidebar";
+import Spinner from "../components/Spinner";
 import { useStreak } from "../hooks/useStreak";
 
 const dayLabel = (dateStr: string) =>
@@ -34,24 +36,28 @@ export default function Streak() {
             <h1>Your streak</h1>
           </div>
           <button className="logout-btn" onClick={handleLogout}>
+            <LogOut size={15} />
             Log out
           </button>
         </header>
 
         {loading ? (
-          <p>Loading...</p>
+          <Spinner label="Loading your streak..." />
         ) : (
           <>
             <div className="streak-summary-grid">
               <div className="card">
+                <div className="card-icon-badge card-icon-amber"><Flame size={18} /></div>
                 <p className="stat-label">Current streak</p>
                 <p className="stat-value mono">{data?.streak.current_streak ?? 0} days</p>
               </div>
               <div className="card">
+                <div className="card-icon-badge"><Trophy size={18} /></div>
                 <p className="stat-label">Longest streak</p>
                 <p className="stat-value mono">{data?.streak.longest_streak ?? 0} days</p>
               </div>
               <div className="card">
+                <div className="card-icon-badge"><CalendarCheck size={18} /></div>
                 <p className="stat-label">Last active</p>
                 <p className="stat-value mono">{data?.streak.last_activity_date ?? "—"}</p>
               </div>

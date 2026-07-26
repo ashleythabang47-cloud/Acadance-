@@ -1,9 +1,11 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { LogIn } from "lucide-react";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import BarField from "../components/BarField";
+import Spinner from "../components/Spinner";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -69,7 +71,7 @@ export default function Login() {
           />
 
           <button type="submit" disabled={loading}>
-            {loading ? "Logging in..." : "Log in"}
+            {loading ? <Spinner label="Logging in..." /> : <><LogIn size={16} /> Log in</>}
           </button>
 
           <p className="switch-link">

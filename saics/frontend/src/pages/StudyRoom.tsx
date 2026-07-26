@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { io, Socket } from "socket.io-client";
+import { Mic, MicOff, PhoneOff, LogOut } from "lucide-react";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import Sidebar from "../components/Sidebar";
+import Spinner from "../components/Spinner";
 
 interface PeerInfo {
   socketId: string;
@@ -199,6 +201,7 @@ export default function StudyRoom() {
             )}
           </div>
           <button className="logout-btn" onClick={handleLogout}>
+            <LogOut size={15} />
             Log out
           </button>
         </header>
@@ -206,12 +209,12 @@ export default function StudyRoom() {
         {error && <div className="error-banner" style={{ marginBottom: 20 }}>{error}</div>}
 
         {connecting ? (
-          <p>Connecting to the room...</p>
+          <Spinner label="Connecting to the room..." />
         ) : (
           <>
             <div className="room-participants">
               <div className="participant-tile you">
-                <div className="avatar-circle">
+                <div className="avatar-circle" style={{ background: student?.avatarColor || "#0e6e66" }}>
                   {student?.fullName?.charAt(0) || "?"}
                 </div>
                 <p>{student?.fullName} (you)</p>
@@ -234,9 +237,11 @@ export default function StudyRoom() {
 
             <div className="room-controls">
               <button className="mute-btn" onClick={toggleMute}>
+                {muted ? <MicOff size={16} /> : <Mic size={16} />}
                 {muted ? "Unmute" : "Mute"}
               </button>
               <button className="leave-btn" onClick={handleLeaveRoom}>
+                <PhoneOff size={16} />
                 Leave room
               </button>
             </div>
