@@ -56,7 +56,8 @@ acadance/
 │   │   ├── seed.sql                  # Optional sample subjects
 │   │   ├── phase3_streaks.sql        # Adds daily_activity table for streaks
 │   │   ├── phase_profile.sql         # Adds bio/academic_year/avatar_color to students
-│   │   └── phase_join_codes.sql      # Adds join_code to study_sessions
+│   │   ├── phase_join_codes.sql      # Adds join_code to study_sessions
+│   │   └── phase_avatar_upload.sql   # Adds avatar_url to students
 │   ├── src/
 │   │   ├── config/db.ts              # MySQL connection pool
 │   │   ├── models/                   # Database queries per entity
@@ -96,6 +97,7 @@ backend/database/seed.sql              (optional — sample subjects)
 backend/database/phase3_streaks.sql
 backend/database/phase_profile.sql
 backend/database/phase_join_codes.sql
+backend/database/phase_avatar_upload.sql
 ```
 
 ### 2. Backend
@@ -131,6 +133,14 @@ Runs on `http://localhost:5173` (or the next available port).
 
 Open the frontend URL, register an account, and you're in.
 
+## Testing
+
+```bash
+cd backend
+npm test
+```
+42 automated tests covering validation logic, the streak calculation rule, and controller behavior — all with mocked models and a mocked AI service, so no live database or API credits are needed to run them. See [TESTING.md](./TESTING.md) for full coverage details and the manual test checklist for the AI quiz and voice session features.
+
 ## API Reference
 
 | Method | Endpoint | Description | Auth required |
@@ -141,6 +151,8 @@ Open the frontend URL, register an account, and you're in.
 | PUT | `/api/students/me` | Update profile (name, bio, academic year, avatar color) | Yes |
 | POST | `/api/students/me/subjects` | Enroll in a subject | Yes |
 | DELETE | `/api/students/me/subjects/:subjectId` | Unenroll from a subject | Yes |
+| POST | `/api/students/me/avatar` | Upload a profile photo (multipart/form-data) | Yes |
+| DELETE | `/api/students/me/avatar` | Remove uploaded photo, revert to color avatar | Yes |
 | GET | `/api/subjects` | List all subjects | Yes |
 | POST | `/api/subjects` | Create a subject | Yes |
 | GET | `/api/performance` | List the student's performance records | Yes |
@@ -318,7 +330,7 @@ This project follows a phased build, matching the dissertation timeline:
 ### Improvements & To-Do
 - [x] Student profile setup (edit name, bio, academic year, avatar color, and subject enrollment)
 - [x] Human-friendly session IDs/codes for study sessions
-- [ ] Formal testing pass (unit tests for backend controllers/models, end-to-end flow testing)
+- [x] Formal testing pass — see [TESTING.md](./TESTING.md)
 
 ## Known Limitations
 
