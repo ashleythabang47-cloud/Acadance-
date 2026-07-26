@@ -240,6 +240,7 @@ export default function Performance() {
           ) : records.length === 0 ? (
             <EmptyState icon={ClipboardList} message="No results yet — add your first one above." />
           ) : (
+            <div className="table-scroll">
             <table className="records-table">
               <thead>
                 <tr>
@@ -275,6 +276,7 @@ export default function Performance() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       </div>

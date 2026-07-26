@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -8,6 +9,8 @@ import {
   UserCircle,
   Sun,
   Moon,
+  Menu,
+  X,
 } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
@@ -28,59 +31,90 @@ export default function Sidebar() {
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
   const { student } = useAuth();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const resolvedAvatarUrl = student?.avatarUrl ? `${API_ORIGIN}${student.avatarUrl}` : null;
 
+  function go(path: string) {
+    navigate(path);
+    setMobileOpen(false);
+  }
+
   return (
-    <aside className="sidebar">
-      <div className="wordmark">Acadance</div>
+    <>
+      {/* Only rendered/visible on small screens via CSS — opens the drawer */}
+      <button
+        className="mobile-menu-trigger"
+        onClick={() => setMobileOpen(true)}
+        aria-label="Open menu"
+      >
+        <Menu size={20} />
+      </button>
 
-      <button className="sidebar-profile-snippet" onClick={() => navigate("/profile")}>
-        {resolvedAvatarUrl ? (
-          <img src={resolvedAvatarUrl} alt="" className="sidebar-avatar-img" />
-        ) : (
-          <div
-            className="sidebar-avatar-fallback"
-            style={{ background: student?.avatarColor || "#0e6e66" }}
+      {/* Dims the page and closes the drawer when tapped, mobile only */}
+      {mobileOpen && (
+        <div className="mobile-backdrop" onClick={() => setMobileOpen(false)} />
+      )}
+
+      <aside className={`sidebar ${mobileOpen ? "mobile-open" : ""}`}>
+        <div className="sidebar-top-row">
+          <div className="wordmark">Acadance</div>
+          <button
+            className="mobile-close-trigger"
+            onClick={() => setMobileOpen(false)}
+            aria-label="Close menu"
           >
-            {student?.fullName?.charAt(0).toUpperCase() || "?"}
-          </div>
-        )}
-        <span className="sidebar-profile-name">{student?.fullName?.split(" ")[0]}</span>
-      </button>
+            <X size={20} />
+          </button>
+        </div>
 
-      <nav>
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive =
-            location.pathname === item.path || location.pathname.startsWith(item.path + "/");
-          return (
-            <span
-              key={item.path}
-              className={`nav-item ${isActive ? "active" : ""} ${!item.enabled ? "disabled" : ""}`}
-              onClick={() => item.enabled && navigate(item.path)}
-              role="button"
+        <button className="sidebar-profile-snippet" onClick={() => go("/profile")}>
+          {resolvedAvatarUrl ? (
+            <img src={resolvedAvatarUrl} alt="" className="sidebar-avatar-img" />
+          ) : (
+            <div
+              className="sidebar-avatar-fallback"
+              style={{ background: student?.avatarColor || "#0e6e66" }}
             >
-              <Icon size={17} strokeWidth={2} />
-              {item.label}
-            </span>
-          );
-        })}
-      </nav>
+              {student?.fullName?.charAt(0).toUpperCase() || "?"}
+            </div>
+          )}
+          <span className="sidebar-profile-name">{student?.fullName?.split(" ")[0]}</span>
+        </button>
 
-      <button className="theme-toggle" onClick={toggleTheme} type="button">
-        {theme === "dark" ? (
-          <>
-            <Sun size={16} />
-            Light mode
-          </>
-        ) : (
-          <>
-            <Moon size={16} />
-            Dark mode
-          </>
-        )}
-      </button>
-    </aside>
+        <nav>
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive =
+              location.pathname === item.path || location.pathname.startsWith(item.path + "/");
+            return (
+              <span
+                key={item.path}
+                className={`nav-item ${isActive ? "active" : ""} ${!item.enabled ? "disabled" : ""}`}
+                onClick={() => item.enabled && go(item.path)}
+                role="button"
+              >
+                <Icon size={17} strokeWidth={2} />
+                {item.label}
+              </span>
+            );
+          })}
+        </nav>
+
+        <button className="theme-toggle" onClick={toggleTheme} type="button">
+          {theme === "dark" ? (
+            <>
+              <Sun size={16} />
+              Light mode
+            </>
+          ) : (
+            <>
+              <Moon size={16} />
+              Dark mode
+            </>
+          )}
+        </button>
+      </aside>
+    </>
   );
 }
