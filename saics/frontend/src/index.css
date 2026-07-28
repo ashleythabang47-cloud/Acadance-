@@ -622,7 +622,7 @@ a {
   border-radius: 10px;
   padding: 8px 10px;
   cursor: pointer;
-  margin-top: -12px;
+  width: 100%;
   text-align: left;
 }
 
@@ -692,32 +692,78 @@ a {
   background: rgba(255, 255, 255, 0.06);
 }
 
-.sidebar nav .nav-item.disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-
-.theme-toggle {
+.icon-toggle-btn {
   display: flex;
   align-items: center;
-  gap: 10px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #cfe4e1;
-  padding: 10px 12px;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
   border-radius: 8px;
-  font-size: 13.5px;
-  font-family: "Inter", sans-serif;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f4efe4;
   cursor: pointer;
 }
 
-.theme-toggle:hover {
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
+.icon-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
 }
 
-.theme-toggle svg {
+/* ---------- Bottom-pinned profile switcher + dropdown ---------- */
+.profile-menu-wrapper {
+  position: relative;
+}
+
+.profile-chevron {
+  margin-left: auto;
+  color: #cfe4e1;
+  transition: transform 0.15s ease;
   flex-shrink: 0;
+}
+
+.profile-chevron.flipped {
+  transform: rotate(180deg);
+}
+
+.profile-dropdown-menu {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 0;
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  z-index: 55;
+}
+
+.profile-dropdown-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border: none;
+  background: none;
+  color: var(--ink);
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+}
+
+.profile-dropdown-item:hover {
+  background: var(--paper);
+}
+
+.profile-dropdown-item.active {
+  color: var(--teal);
+  font-weight: 600;
+}
+
+.profile-dropdown-item:not(:last-child) {
+  border-bottom: 1px solid var(--line);
 }
 
 .card[role="button"] {
