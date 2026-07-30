@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { io, Socket } from "socket.io-client";
-import { Mic, MicOff, PhoneOff, LogOut } from "lucide-react";
+import { Mic, MicOff, PhoneOff } from "lucide-react";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
-import Sidebar from "../components/Sidebar";
+import AppLayout from "../components/AppLayout";
 import Spinner from "../components/Spinner";
 
 interface PeerInfo {
@@ -23,7 +23,7 @@ const ICE_SERVERS = [{ urls: "stun:stun.l.google.com:19302" }];
 export default function StudyRoom() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { student, logout } = useAuth();
+  const { student } = useAuth();
 
   const [sessionTitle, setSessionTitle] = useState("");
   const [joinCode, setJoinCode] = useState("");
@@ -180,74 +180,61 @@ export default function StudyRoom() {
     navigate("/study-sessions");
   }
 
-  function handleLogout() {
-    logout();
-    navigate("/login");
-  }
-
   return (
-    <div className="app-shell">
-      <Sidebar />
+    <AppLayout>
+      <header className="topbar">
+        <div>
+          <p className="greeting-eyebrow">Live session</p>
+          <h1>{sessionTitle || "Study Room"}</h1>
+          {joinCode && (
+            <p className="room-code-tag">
+              Invite code: <span className="mono">{joinCode}</span>
+            </p>
+          )}
+        </div>
+      </header>
 
-      <div className="main-content">
-        <header className="topbar">
-          <div>
-            <p className="greeting-eyebrow">Live session</p>
-            <h1>{sessionTitle || "Study Room"}</h1>
-            {joinCode && (
-              <p className="room-code-tag">
-                Invite code: <span className="mono">{joinCode}</span>
-              </p>
-            )}
-          </div>
-          <button className="logout-btn" onClick={handleLogout}>
-            <LogOut size={15} />
-            Log out
-          </button>
-        </header>
+      {error && <div className="error-banner" style={{ marginBottom: 20 }}>{error}</div>}
 
-        {error && <div className="error-banner" style={{ marginBottom: 20 }}>{error}</div>}
-
-        {connecting ? (
-          <Spinner label="Connecting to the room..." />
-        ) : (
-          <>
-            <div className="room-participants">
-              <div className="participant-tile you">
-                <div className="avatar-circle" style={{ background: student?.avatarColor || "#0e6e66" }}>
-                  {student?.fullName?.charAt(0) || "?"}
-                </div>
-                <p>{student?.fullName} (you)</p>
-                {muted && <span className="muted-tag">Muted</span>}
+      {connecting ? (
+        <Spinner label="Connecting to the room..." />
+      ) : (
+        <>
+          <div className="room-participants">
+            <div className="participant-tile you">
+              <div className="avatar-circle" style={{ background: student?.avatarColor || "#0e6e66" }}>
+                {student?.fullName?.charAt(0) || "?"}
               </div>
-
-              {remotePeers.map((peer) => (
-                <div key={peer.socketId} className="participant-tile">
-                  <div className="avatar-circle">{peer.fullName.charAt(0)}</div>
-                  <p>{peer.fullName}</p>
-                  <audio
-                    autoPlay
-                    ref={(el) => {
-                      if (el) el.srcObject = peer.stream;
-                    }}
-                  />
-                </div>
-              ))}
+              <p>{student?.fullName} (you)</p>
+              {muted && <span className="muted-tag">Muted</span>}
             </div>
 
-            <div className="room-controls">
-              <button className="mute-btn" onClick={toggleMute}>
-                {muted ? <MicOff size={16} /> : <Mic size={16} />}
-                {muted ? "Unmute" : "Mute"}
-              </button>
-              <button className="leave-btn" onClick={handleLeaveRoom}>
-                <PhoneOff size={16} />
-                Leave room
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
+            {remotePeers.map((peer) => (
+              <div key={peer.socketId} className="participant-tile">
+                <div className="avatar-circle">{peer.fullName.charAt(0)}</div>
+                <p>{peer.fullName}</p>
+                <audio
+                  autoPlay
+                  ref={(el) => {
+                    if (el) el.srcObject = peer.stream;
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+
+          <div className="room-controls">
+            <button className="mute-btn" onClick={toggleMute}>
+              {muted ? <MicOff size={16} /> : <Mic size={16} />}
+              {muted ? "Unmute" : "Mute"}
+            </button>
+            <button className="leave-btn" onClick={handleLeaveRoom}>
+              <PhoneOff size={16} />
+              Leave room
+            </button>
+          </div>
+        </>
+      )}
+    </AppLayout>
   );
 }

@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   LineChart,
   Line,
@@ -10,10 +9,9 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { Plus, Trash2, ClipboardList, LogOut } from "lucide-react";
+import { Plus, Trash2, ClipboardList } from "lucide-react";
 import { api } from "../api/client";
-import { useAuth } from "../context/AuthContext";
-import Sidebar from "../components/Sidebar";
+import AppLayout from "../components/AppLayout";
 import Spinner from "../components/Spinner";
 import EmptyState from "../components/EmptyState";
 
@@ -34,9 +32,6 @@ interface PerformanceRecord {
 }
 
 export default function Performance() {
-  const { logout } = useAuth();
-  const navigate = useNavigate();
-
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [records, setRecords] = useState<PerformanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -105,11 +100,6 @@ export default function Performance() {
     }
   }
 
-  function handleLogout() {
-    logout();
-    navigate("/login");
-  }
-
   // Chart data: sorted chronologically, percentage-based so subjects with
   // different max scores are comparable on one axis.
   const chartData = [...records]
@@ -121,30 +111,28 @@ export default function Performance() {
     }));
 
   return (
-    <div className="app-shell">
-      <Sidebar />
+    <AppLayout>
+      <header className="topbar">
+        <div>
+          <p className="greeting-eyebrow">Academic Tracking</p>
+          <h1>Performance</h1>
+        </div>
+      </header>
 
-      <div className="main-content">
-        <header className="topbar">
-          <div>
-            <p className="greeting-eyebrow">Academic Tracking</p>
-            <h1>Performance</h1>
-          </div>
-          <button className="logout-btn" onClick={handleLogout}>
-            <LogOut size={15} />
-            Log out
-          </button>
-        </header>
+      {error && <div className="error-banner" style={{ marginBottom: 20 }}>{error}</div>}
 
-        {error && <div className="error-banner" style={{ marginBottom: 20 }}>{error}</div>}
-
-        <div className="card" style={{ marginBottom: 24 }}>
-          <h3>Add a result</h3>
+      <div className="card" style={{ marginBottom: 24 }}>
+        <h3>Add a result</h3>
           <form onSubmit={handleAddRecord} className="performance-form">
             <div className="form-row">
               <div>
-                <label>Subject</label>
-                <select value={subjectId} onChange={(e) => setSubjectId(e.target.value)} required>
+                <label htmlFor="perf-subject">Subject</label>
+                <select
+                  id="perf-subject"
+                  value={subjectId}
+                  onChange={(e) => setSubjectId(e.target.value)}
+                  required
+                >
                   <option value="" disabled>
                     Select a subject
                   </option>
@@ -156,8 +144,9 @@ export default function Performance() {
                 </select>
               </div>
               <div>
-                <label>Assessment</label>
+                <label htmlFor="perf-assessment">Assessment</label>
                 <input
+                  id="perf-assessment"
                   type="text"
                   value={assessmentName}
                   onChange={(e) => setAssessmentName(e.target.value)}
@@ -169,8 +158,9 @@ export default function Performance() {
 
             <div className="form-row">
               <div>
-                <label>Score</label>
+                <label htmlFor="perf-score">Score</label>
                 <input
+                  id="perf-score"
                   type="number"
                   value={score}
                   onChange={(e) => setScore(e.target.value)}
@@ -179,8 +169,9 @@ export default function Performance() {
                 />
               </div>
               <div>
-                <label>Out of</label>
+                <label htmlFor="perf-max-score">Out of</label>
                 <input
+                  id="perf-max-score"
                   type="number"
                   value={maxScore}
                   onChange={(e) => setMaxScore(e.target.value)}
@@ -189,8 +180,9 @@ export default function Performance() {
                 />
               </div>
               <div>
-                <label>Date</label>
+                <label htmlFor="perf-date">Date</label>
                 <input
+                  id="perf-date"
                   type="date"
                   value={assessmentDate}
                   onChange={(e) => setAssessmentDate(e.target.value)}
@@ -279,7 +271,6 @@ export default function Performance() {
             </div>
           )}
         </div>
-      </div>
-    </div>
+    </AppLayout>
   );
 }

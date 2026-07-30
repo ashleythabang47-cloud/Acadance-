@@ -53,8 +53,9 @@ export default function Register() {
 
           {error && <div className="error-banner">{error}</div>}
 
-          <label>Full name</label>
+          <label htmlFor="register-name">Full name</label>
           <input
+            id="register-name"
             type="text"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
@@ -62,8 +63,9 @@ export default function Register() {
             placeholder="Your full name"
           />
 
-          <label>Email</label>
+          <label htmlFor="register-email">Email</label>
           <input
+            id="register-email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -71,8 +73,9 @@ export default function Register() {
             placeholder="you@example.com"
           />
 
-          <label>Password</label>
+          <label htmlFor="register-password">Password</label>
           <input
+            id="register-password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}

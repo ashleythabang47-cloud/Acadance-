@@ -64,6 +64,29 @@ button:active:not(:disabled) {
   transform: scale(0.96);
 }
 
+/* Consistent, visible keyboard focus ring across every interactive
+   element — buttons, clickable cards/nav-items (role="button"), and
+   links. Only shows for keyboard navigation (:focus-visible), not on
+   mouse click, so it doesn't add visual noise for mouse/touch users. */
+button:focus-visible,
+[role="button"]:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 2px;
+}
+
+/* On the dark teal sidebar/brand panel, the standard teal ring would be
+   nearly invisible against a similar-colored background — use a light
+   ring there instead so it's actually visible. */
+.navbar *:focus-visible,
+.auth-brand-panel *:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -327,88 +350,112 @@ a {
 }
 
 /* ==========================================================
-   Dashboard — sidebar + topbar layout
+   Layout — top navbar + main content
    ========================================================== */
-.app-shell {
-  display: grid;
-  grid-template-columns: 240px 1fr;
+.page-shell {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-/* ---------- Mobile nav: hamburger trigger + slide-in drawer ---------- */
-.mobile-menu-trigger,
-.mobile-close-trigger {
-  display: none;
+.navbar {
+  background: var(--teal-deep);
+  color: #f4efe4;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
 }
 
-@media (max-width: 760px) {
-  .app-shell {
-    grid-template-columns: 1fr;
-  }
-
-  .mobile-menu-trigger {
-    display: flex;
-    position: fixed;
-    top: 16px;
-    left: 16px;
-    z-index: 40;
-    align-items: center;
-    justify-content: center;
-    width: 42px;
-    height: 42px;
-    border-radius: 10px;
-    border: none;
-    background: var(--teal-deep);
-    color: #fff;
-    cursor: pointer;
-    box-shadow: var(--shadow);
-  }
-
-  .mobile-close-trigger {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: none;
-    border: none;
-    color: #f4efe4;
-    cursor: pointer;
-    padding: 4px;
-  }
-
-  .sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    width: 260px;
-    z-index: 50;
-    transform: translateX(-100%);
-    transition: transform 0.25s ease;
-    box-shadow: 0 0 40px rgba(0, 0, 0, 0.3);
-  }
-
-  .sidebar.mobile-open {
-    transform: translateX(0);
-  }
-
-  .mobile-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.4);
-    z-index: 45;
-  }
-}
-
-.sidebar-top-row {
+.navbar-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 32px;
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 24px;
 }
 
-.sidebar-top-actions {
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  min-width: 0;
+}
+
+.navbar .wordmark {
+  font-family: "Fraunces", serif;
+  font-size: 19px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.navbar-links {
   display: flex;
   align-items: center;
   gap: 4px;
+}
+
+.navbar-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #cfe4e1;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  position: relative;
+}
+
+.navbar-link:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.navbar-link.active {
+  color: #fff;
+  font-weight: 600;
+}
+
+.navbar-link.active::after {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--amber);
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.icon-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f4efe4;
+  cursor: pointer;
+}
+
+.icon-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
 }
 
 /* ---------- Notification bell + dropdown ---------- */
@@ -456,7 +503,7 @@ a {
 .notification-panel {
   position: absolute;
   top: calc(100% + 10px);
-  left: 0;
+  right: 0;
   width: 300px;
   max-height: 380px;
   background: var(--surface);
@@ -594,128 +641,55 @@ a {
   background: var(--teal);
 }
 
-.sidebar {
-  background: var(--teal-deep);
-  color: #f4efe4;
-  padding: 28px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
+/* ---------- Profile dropdown (opens downward from the navbar) ---------- */
+.profile-menu-wrapper {
+  position: relative;
 }
 
-.sidebar nav {
-  flex: 1;
-}
-
-.sidebar .wordmark {
-  font-family: "Fraunces", serif;
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.sidebar-profile-snippet {
+.navbar-profile-trigger {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
-  padding: 8px 10px;
+  padding: 6px 10px 6px 6px;
   cursor: pointer;
-  width: 100%;
-  text-align: left;
 }
 
-.sidebar-profile-snippet:hover {
+.navbar-profile-trigger:hover {
   background: rgba(255, 255, 255, 0.12);
 }
 
-.sidebar-avatar-img {
-  width: 32px;
-  height: 32px;
+.navbar-avatar-img {
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
 }
 
-.sidebar-avatar-fallback {
-  width: 32px;
-  height: 32px;
+.navbar-avatar-fallback {
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
   font-family: "Fraunces", serif;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   flex-shrink: 0;
 }
 
-.sidebar-profile-name {
+.navbar-profile-name {
   color: #f4efe4;
   font-size: 13.5px;
   font-weight: 600;
 }
 
-.sidebar nav {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.sidebar nav a,
-.sidebar nav .nav-item {
-  padding: 10px 12px;
-  border-radius: 8px;
-  font-size: 14px;
-  color: #cfe4e1;
-  text-decoration: none;
-  cursor: default;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  transition: background-color 0.15s ease, color 0.15s ease;
-}
-
-.sidebar nav .nav-item svg {
-  flex-shrink: 0;
-}
-
-.sidebar nav .nav-item.active {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
-  font-weight: 600;
-}
-
-.sidebar nav .nav-item:not(.disabled):hover {
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.icon-toggle-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
-  border: none;
-  background: rgba(255, 255, 255, 0.08);
-  color: #f4efe4;
-  cursor: pointer;
-}
-
-.icon-toggle-btn:hover {
-  background: rgba(255, 255, 255, 0.16);
-}
-
-/* ---------- Bottom-pinned profile switcher + dropdown ---------- */
-.profile-menu-wrapper {
-  position: relative;
-}
-
 .profile-chevron {
-  margin-left: auto;
   color: #cfe4e1;
   transition: transform 0.15s ease;
   flex-shrink: 0;
@@ -727,9 +701,9 @@ a {
 
 .profile-dropdown-menu {
   position: absolute;
-  bottom: calc(100% + 10px);
-  left: 0;
+  top: calc(100% + 10px);
   right: 0;
+  min-width: 190px;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -762,8 +736,99 @@ a {
   font-weight: 600;
 }
 
-.profile-dropdown-item:not(:last-child) {
-  border-bottom: 1px solid var(--line);
+.profile-dropdown-item.logout {
+  color: var(--brick);
+}
+
+.profile-dropdown-divider {
+  height: 1px;
+  background: var(--line);
+  margin: 4px 0;
+}
+
+/* ---------- Mobile nav: hamburger + dropdown sheet ---------- */
+.mobile-menu-trigger {
+  display: none;
+}
+
+.mobile-nav-sheet {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .navbar-links {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .navbar-inner {
+    padding: 0 16px;
+  }
+
+  .navbar-profile-name {
+    display: none;
+  }
+
+  .mobile-menu-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(255, 255, 255, 0.08);
+    color: #f4efe4;
+    cursor: pointer;
+  }
+
+  .mobile-menu-trigger:hover {
+    background: rgba(255, 255, 255, 0.16);
+  }
+
+  .mobile-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    z-index: 35;
+  }
+
+  .mobile-nav-sheet {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--teal-deep);
+    padding: 10px 16px 16px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+    z-index: 40;
+  }
+
+  .mobile-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 10px;
+    border-radius: 8px;
+    color: #cfe4e1;
+    font-size: 14.5px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  .mobile-nav-item.active {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-weight: 600;
+  }
+
+  .mobile-nav-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
 }
 
 .card[role="button"] {
@@ -1421,12 +1486,15 @@ a {
 
 .main-content {
   padding: 36px 44px;
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
   animation: fadeIn 0.25s ease;
 }
 
 @media (max-width: 760px) {
   .main-content {
-    padding: 76px 20px 24px;
+    padding: 24px 16px;
   }
 }
 

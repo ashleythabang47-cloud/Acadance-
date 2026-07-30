@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { CheckCircle2, XCircle, Send, ArrowLeft, LogOut, Trophy } from "lucide-react";
+import { CheckCircle2, XCircle, Send, ArrowLeft, Trophy } from "lucide-react";
 import { api } from "../api/client";
-import { useAuth } from "../context/AuthContext";
-import Sidebar from "../components/Sidebar";
+import AppLayout from "../components/AppLayout";
 import Spinner from "../components/Spinner";
 
 interface Question {
@@ -27,7 +26,6 @@ interface ResultItem {
 export default function TakeQuiz() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { logout } = useAuth();
 
   const [quizTitle, setQuizTitle] = useState("");
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -79,30 +77,18 @@ export default function TakeQuiz() {
     }
   }
 
-  function handleLogout() {
-    logout();
-    navigate("/login");
-  }
-
   const resultByQuestionId = new Map(result?.results.map((r) => [r.questionId, r]) || []);
 
   return (
-    <div className="app-shell">
-      <Sidebar />
+    <AppLayout>
+      <header className="topbar">
+        <div>
+          <p className="greeting-eyebrow">Quiz</p>
+          <h1>{quizTitle || "Loading..."}</h1>
+        </div>
+      </header>
 
-      <div className="main-content">
-        <header className="topbar">
-          <div>
-            <p className="greeting-eyebrow">Quiz</p>
-            <h1>{quizTitle || "Loading..."}</h1>
-          </div>
-          <button className="logout-btn" onClick={handleLogout}>
-            <LogOut size={15} />
-            Log out
-          </button>
-        </header>
-
-        {error && <div className="error-banner" style={{ marginBottom: 20 }}>{error}</div>}
+      {error && <div className="error-banner" style={{ marginBottom: 20 }}>{error}</div>}
 
         {loading ? (
           <Spinner label="Loading quiz..." />
@@ -196,7 +182,6 @@ export default function TakeQuiz() {
             </button>
           </form>
         )}
-      </div>
-    </div>
+    </AppLayout>
   );
 }

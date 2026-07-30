@@ -15,15 +15,24 @@ export default function NotificationBell() {
   const panelRef = useRef<HTMLDivElement>(null);
   const { notifications, unreadCount, loading, markAsRead, markAllAsRead } = useNotifications();
 
-  // Close the panel when clicking anywhere outside it.
+  // Close the panel when clicking anywhere outside it, or pressing Escape.
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
         setOpen(false);
       }
     }
-    if (open) document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    function handleEscape(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    if (open) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleEscape);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
   }, [open]);
 
   return (
@@ -32,17 +41,19 @@ export default function NotificationBell() {
         className="notification-bell-trigger"
         onClick={() => setOpen((prev) => !prev)}
         aria-label="Notifications"
+        aria-haspopup="true"
+        aria-expanded={open}
       >
         <Bell size={18} />
         {unreadCount > 0 && <span className="notification-badge">{unreadCount > 9 ? "9+" : unreadCount}</span>}
       </button>
 
       {open && (
-        <div className="notification-panel">
+        <div className="notification-panel" role="menu">
           <div className="notification-panel-header">
             <span>Notifications</span>
             {unreadCount > 0 && (
-              <button className="mark-all-read-btn" onClick={markAllAsRead}>
+              <button className="mark-all-read-btn" onClick={markAllAsRead} role="menuitem">
                 <CheckCheck size={13} />
                 Mark all read
               </button>
@@ -62,6 +73,7 @@ export default function NotificationBell() {
                     key={n.notification_id}
                     className={`notification-item ${n.type} ${n.is_read ? "read" : "unread"}`}
                     onClick={() => !n.is_read && markAsRead(n.notification_id)}
+                    role="menuitem"
                   >
                     <Icon size={15} className="notification-item-icon" />
                     <div>

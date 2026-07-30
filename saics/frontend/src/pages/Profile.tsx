@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, ChangeEvent, DragEvent } from "react";
-import { useNavigate } from "react-router-dom";
-import { LogOut, Save, Trash2, Check } from "lucide-react";
+import { Save, Trash2, Check } from "lucide-react";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
-import Sidebar from "../components/Sidebar";
+import AppLayout from "../components/AppLayout";
 import Spinner from "../components/Spinner";
+import { handleKeyActivation } from "../utils/a11y";
 
 interface Subject {
   subject_id: number;
@@ -27,8 +27,7 @@ const API_ORIGIN = "http://localhost:5000";
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
 
 export default function Profile() {
-  const { logout, updateStudentInfo } = useAuth();
-  const navigate = useNavigate();
+  const { updateStudentInfo } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [profile, setProfile] = useState<StudentProfile | null>(null);
@@ -176,39 +175,28 @@ export default function Profile() {
     }
   }
 
-  function handleLogout() {
-    logout();
-    navigate("/login");
-  }
-
   const resolvedAvatarUrl = avatarUrl ? `${API_ORIGIN}${avatarUrl}` : null;
 
   return (
-    <div className="app-shell">
-      <Sidebar />
+    <AppLayout>
+      <header className="topbar">
+        <div>
+          <p className="greeting-eyebrow">Your account</p>
+          <h1>Profile</h1>
+        </div>
+      </header>
 
-      <div className="main-content">
-        <header className="topbar">
-          <div>
-            <p className="greeting-eyebrow">Your account</p>
-            <h1>Profile</h1>
-          </div>
-          <button className="logout-btn" onClick={handleLogout}>
-            <LogOut size={15} />
-            Log out
-          </button>
-        </header>
+      {error && <div className="error-banner" style={{ marginBottom: 20 }}>{error}</div>}
 
-        {error && <div className="error-banner" style={{ marginBottom: 20 }}>{error}</div>}
-
-        {loading ? (
-          <Spinner label="Loading your profile..." />
-        ) : (
-          <div className="profile-layout">
+      {loading ? (
+        <Spinner label="Loading your profile..." />
+      ) : (
+        <div className="profile-layout">
             <div className="card profile-photo-card">
               <div
                 className={`avatar-dropzone ${dragActive ? "drag-active" : ""}`}
                 onClick={() => fileInputRef.current?.click()}
+                onKeyDown={handleKeyActivation(() => fileInputRef.current?.click())}
                 onDragOver={(e) => {
                   e.preventDefault();
                   setDragActive(true);
@@ -216,6 +204,8 @@ export default function Profile() {
                 onDragLeave={() => setDragActive(false)}
                 onDrop={handleDrop}
                 role="button"
+                tabIndex={0}
+                aria-label="Upload a profile photo"
               >
                 {resolvedAvatarUrl ? (
                   <img src={resolvedAvatarUrl} alt="Your profile" className="avatar-image" />
@@ -290,8 +280,9 @@ export default function Profile() {
                 <form onSubmit={handleSave} className="performance-form" style={{ marginTop: 16 }}>
                   <div className="form-row">
                     <div>
-                      <label>Full name</label>
+                      <label htmlFor="profile-name">Full name</label>
                       <input
+                        id="profile-name"
                         type="text"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
@@ -299,8 +290,9 @@ export default function Profile() {
                       />
                     </div>
                     <div>
-                      <label>Academic year</label>
+                      <label htmlFor="profile-year">Academic year</label>
                       <input
+                        id="profile-year"
                         type="text"
                         value={academicYear}
                         onChange={(e) => setAcademicYear(e.target.value)}
@@ -309,8 +301,9 @@ export default function Profile() {
                     </div>
                   </div>
 
-                  <label>Bio</label>
+                  <label htmlFor="profile-bio">Bio</label>
                   <textarea
+                    id="profile-bio"
                     value={bio}
                     onChange={(e) => setBio(e.target.value)}
                     placeholder="A short line about yourself or what you're studying"
@@ -359,7 +352,6 @@ export default function Profile() {
             </div>
           </div>
         )}
-      </div>
-    </div>
+    </AppLayout>
   );
 }

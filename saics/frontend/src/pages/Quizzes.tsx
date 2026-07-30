@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, BookOpenCheck, ArrowRight, LogOut } from "lucide-react";
+import { Sparkles, BookOpenCheck, ArrowRight } from "lucide-react";
 import { api } from "../api/client";
-import { useAuth } from "../context/AuthContext";
-import Sidebar from "../components/Sidebar";
+import AppLayout from "../components/AppLayout";
 import Spinner from "../components/Spinner";
 import EmptyState from "../components/EmptyState";
 
@@ -23,7 +22,6 @@ interface QuizSummary {
 }
 
 export default function Quizzes() {
-  const { logout } = useAuth();
   const navigate = useNavigate();
 
   const [quizzes, setQuizzes] = useState<QuizSummary[]>([]);
@@ -81,31 +79,19 @@ export default function Quizzes() {
     }
   }
 
-  function handleLogout() {
-    logout();
-    navigate("/login");
-  }
-
   return (
-    <div className="app-shell">
-      <Sidebar />
+    <AppLayout>
+      <header className="topbar">
+        <div>
+          <p className="greeting-eyebrow">AI-Generated</p>
+          <h1>Quizzes</h1>
+        </div>
+      </header>
 
-      <div className="main-content">
-        <header className="topbar">
-          <div>
-            <p className="greeting-eyebrow">AI-Generated</p>
-            <h1>Quizzes</h1>
-          </div>
-          <button className="logout-btn" onClick={handleLogout}>
-            <LogOut size={15} />
-            Log out
-          </button>
-        </header>
+      {error && <div className="error-banner" style={{ marginBottom: 20 }}>{error}</div>}
 
-        {error && <div className="error-banner" style={{ marginBottom: 20 }}>{error}</div>}
-
-        <div className="card" style={{ marginBottom: 24 }}>
-          <h3>Generate a new quiz</h3>
+      <div className="card" style={{ marginBottom: 24 }}>
+        <h3>Generate a new quiz</h3>
           <p style={{ marginTop: -4, marginBottom: 16, fontSize: 13, color: "var(--ink-soft)" }}>
             Paste in your study notes or a section of your textbook — the AI will pull out the
             key concepts and build questions from them.
@@ -113,8 +99,13 @@ export default function Quizzes() {
           <form onSubmit={handleGenerate} className="performance-form">
             <div className="form-row">
               <div>
-                <label>Subject</label>
-                <select value={subjectId} onChange={(e) => setSubjectId(e.target.value)} required>
+                <label htmlFor="quiz-subject">Subject</label>
+                <select
+                  id="quiz-subject"
+                  value={subjectId}
+                  onChange={(e) => setSubjectId(e.target.value)}
+                  required
+                >
                   <option value="" disabled>
                     Select a subject
                   </option>
@@ -126,8 +117,9 @@ export default function Quizzes() {
                 </select>
               </div>
               <div>
-                <label>Quiz title</label>
+                <label htmlFor="quiz-title">Quiz title</label>
                 <input
+                  id="quiz-title"
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
@@ -137,8 +129,9 @@ export default function Quizzes() {
               </div>
             </div>
 
-            <label>Study material</label>
+            <label htmlFor="quiz-study-text">Study material</label>
             <textarea
+              id="quiz-study-text"
               value={studyText}
               onChange={(e) => setStudyText(e.target.value)}
               placeholder="Paste your notes or textbook section here (at least a few sentences)..."
@@ -148,16 +141,21 @@ export default function Quizzes() {
 
             <div className="form-row">
               <div>
-                <label>Difficulty</label>
-                <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>
+                <label htmlFor="quiz-difficulty">Difficulty</label>
+                <select
+                  id="quiz-difficulty"
+                  value={difficulty}
+                  onChange={(e) => setDifficulty(e.target.value)}
+                >
                   <option value="easy">Easy</option>
                   <option value="medium">Medium</option>
                   <option value="hard">Hard</option>
                 </select>
               </div>
               <div>
-                <label>Number of questions</label>
+                <label htmlFor="quiz-num-questions">Number of questions</label>
                 <input
+                  id="quiz-num-questions"
                   type="number"
                   value={numQuestions}
                   onChange={(e) => setNumQuestions(e.target.value)}
@@ -208,7 +206,6 @@ export default function Quizzes() {
             </div>
           )}
         </div>
-      </div>
-    </div>
+    </AppLayout>
   );
 }
