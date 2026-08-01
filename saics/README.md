@@ -30,14 +30,14 @@ The name reflects the core idea: **academic + cadence** — building a sustainab
 
 | Module | Status | Description |
 |---|---|---|
-| Authentication | ✅ Complete | Secure registration/login with hashed passwords and JWT sessions |
-| Academic Tracking | ✅ Complete | Log test/assignment results per subject, view trends on an interactive chart |
-| Streaks & Gamification | ✅ Complete | Real activity-based streak tracking (not a manual counter) — login, logging results, quizzes, and study sessions all count |
-| Voice Study Sessions | ✅ Complete | Real-time collaborative study rooms via WebRTC, joinable by link or a shareable 6-character code |
-| AI Quiz Generation | ✅ Complete | Quizzes generated from pasted study material via the Anthropic API, with AI-assisted grading of open-ended answers |
-| Student Profiles | ✅ Complete | Editable bio, academic year, avatar color, and subject enrollment |
-| Notifications & Recommendations | ✅ Complete | Rules-based alerts for low scores, streak-reset reminders, and quiz-retry suggestions — triggered by real activity, not manually created |
-| Predictive Analytics | 🔜 Planned | At-risk student identification from historical performance data |
+| Authentication | Complete | Secure registration/login with hashed passwords and JWT sessions |
+| Academic Tracking |  Complete | Log test/assignment results per subject, view trends on an interactive chart |
+| Streaks & Gamification |  Complete | Real activity-based streak tracking (not a manual counter) — login, logging results, quizzes, and study sessions all count |
+| Voice Study Sessions |  Complete | Real-time collaborative study rooms via WebRTC, joinable by link or a shareable 6-character code |
+| AI Quiz Generation |  Complete | Quizzes generated from pasted study material via the Anthropic API, with AI-assisted grading of open-ended answers |
+| Student Profiles | Complete | Editable bio, academic year, avatar color, and subject enrollment |
+| Notifications & Recommendations |  Complete | Rules-based alerts for low scores, streak-reset reminders, and quiz-retry suggestions — triggered by real activity, not manually created |
+| Predictive Analytics |  Planned | At-risk student identification from historical performance data |
 
 ## Tech Stack
 
