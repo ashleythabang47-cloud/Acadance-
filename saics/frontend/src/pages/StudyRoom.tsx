@@ -202,7 +202,7 @@ export default function StudyRoom() {
         <>
           <div className="room-participants">
             <div className="participant-tile you">
-              <div className="avatar-circle" style={{ background: student?.avatarColor || "#0e6e66" }}>
+              <div className="avatar-circle" style={{ background: student?.avatarColor || "#4f46e5" }}>
                 {student?.fullName?.charAt(0) || "?"}
               </div>
               <p>{student?.fullName} (you)</p>

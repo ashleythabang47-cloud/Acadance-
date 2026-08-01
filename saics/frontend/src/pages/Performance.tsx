@@ -216,9 +216,9 @@ export default function Performance() {
                 <Line
                   type="monotone"
                   dataKey="percentage"
-                  stroke="#0e6e66"
+                  stroke="#4f46e5"
                   strokeWidth={2}
-                  dot={{ r: 4, fill: "#0e6e66" }}
+                  dot={{ r: 4, fill: "#4f46e5" }}
                 />
               </LineChart>
             </ResponsiveContainer>

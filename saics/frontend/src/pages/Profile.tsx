@@ -22,7 +22,7 @@ interface StudentProfile {
   avatar_url: string | null;
 }
 
-const AVATAR_COLORS = ["#0e6e66", "#e7a33e", "#b8542f", "#3d5a80", "#7b506f"];
+const AVATAR_COLORS = ["#4f46e5", "#d97706", "#dc2626", "#2563eb", "#9333ea"];
 const API_ORIGIN = "http://localhost:5000";
 const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
 

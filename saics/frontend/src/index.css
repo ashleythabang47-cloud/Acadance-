@@ -1,45 +1,85 @@
 @import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
 
 :root {
-  /* ---- Acadance palette ---- */
-  --paper: #faf8f3;
+  /* ---- Acadance palette v2 — true white, indigo-primary, multi-accent ---- */
+  --paper: #ffffff;
   --surface: #ffffff;
-  --ink: #1c1b29;
-  --ink-soft: #55536b;
-  --line: #e6e0d4;
+  --ink: #0b0b0f;
+  --ink-soft: #68666f;
+  --line: #e6e5ea;
 
-  --teal: #0e6e66;
-  --teal-deep: #0a4f49;
-  --teal-tint: #e4f2f0;
+  /* Fixed brand surface (navbar, auth screens) — deep indigo-black,
+     distinct from the interactive primary so the "chrome" reads as a
+     consistent brand color regardless of page theme. */
+  --navbar-bg: #14122b;
 
-  --amber: #e7a33e;
-  --amber-tint: #fdf0dd;
+  /* Primary — brand/CTA color used for buttons, links, focus rings,
+     and the Performance module. Indigo, deliberately not the
+     teal/terracotta combination common in AI-generated interfaces. */
+  --primary: #4f46e5;
+  --primary-deep: #3730a3;
+  --primary-tint: #eef0fd;
 
-  --brick: #b8542f;
-  --brick-tint: #fbeae2;
+  /* Secondary accents — one per module, for real visual variety
+     rather than a single recolored accent everywhere. */
+  --violet: #9333ea;
+  --violet-tint: #f6ecfe;
+
+  --blue: #2563eb;
+  --blue-tint: #e8f0fe;
+
+  --teal: #0d9488;
+  --teal-deep: #0f766e;
+  --teal-tint: #e3f6f4;
+
+  --amber: #d97706;
+  --amber-tint: #fdf1e0;
+
+  --brick: #dc2626;
+  --brick-tint: #fde8e8;
+
+  --success: #16a34a;
+  --success-tint: #e7f7ec;
 
   --radius: 10px;
-  --shadow: 0 2px 4px rgba(28, 27, 41, 0.04), 0 8px 24px rgba(28, 27, 41, 0.06);
+  --shadow: 0 2px 4px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
 }
 
 [data-theme="dark"] {
-  --paper: #14141c;
-  --surface: #1d1e29;
-  --ink: #f2f0ea;
-  --ink-soft: #a6a3b8;
-  --line: #33313f;
+  --paper: #000000;
+  --surface: #0d0d10;
+  --ink: #f5f5f7;
+  --ink-soft: #9d9ca6;
+  --line: #232327;
 
-  --teal: #2bb3a6;
-  --teal-deep: #0a4f49;
-  --teal-tint: rgba(43, 179, 166, 0.16);
+  /* True black in dark mode — the navbar blends into the page rather
+     than staying a lighter fixed color, per the "all black" brief. */
+  --navbar-bg: #000000;
 
-  --amber: #eab868;
-  --amber-tint: rgba(234, 184, 104, 0.16);
+  --primary: #818cf8;
+  --primary-deep: #4f46e5;
+  --primary-tint: rgba(129, 140, 248, 0.18);
 
-  --brick: #e2794f;
-  --brick-tint: rgba(226, 121, 79, 0.16);
+  --violet: #c084fc;
+  --violet-tint: rgba(192, 132, 252, 0.18);
 
-  --shadow: 0 2px 4px rgba(0, 0, 0, 0.25), 0 8px 24px rgba(0, 0, 0, 0.35);
+  --blue: #60a5fa;
+  --blue-tint: rgba(96, 165, 250, 0.18);
+
+  --teal: #2dd4bf;
+  --teal-deep: #14b8a6;
+  --teal-tint: rgba(45, 212, 191, 0.18);
+
+  --amber: #fbbf24;
+  --amber-tint: rgba(251, 191, 36, 0.18);
+
+  --brick: #f87171;
+  --brick-tint: rgba(248, 113, 113, 0.18);
+
+  --success: #4ade80;
+  --success-tint: rgba(74, 222, 128, 0.18);
+
+  --shadow: 0 2px 4px rgba(0, 0, 0, 0.6), 0 8px 30px rgba(0, 0, 0, 0.75);
 }
 
 body,
@@ -74,7 +114,7 @@ a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 2px solid var(--teal);
+  outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
 
@@ -184,7 +224,7 @@ a {
 }
 
 .auth-brand-panel {
-  background: var(--teal-deep);
+  background: var(--navbar-bg);
   color: #f4efe4;
   position: relative;
   overflow: hidden;
@@ -257,7 +297,7 @@ a {
   font-size: 12px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--teal);
+  color: var(--primary);
   margin: 0 0 10px;
 }
 
@@ -295,15 +335,15 @@ a {
 
 .auth-card input:focus {
   outline: none;
-  border-color: var(--teal);
-  box-shadow: 0 0 0 3px var(--teal-tint);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-tint);
 }
 
 .auth-card button {
   margin-top: 26px;
   width: 100%;
   padding: 13px;
-  background: var(--teal);
+  background: var(--primary);
   color: #fff;
   border: none;
   border-radius: var(--radius);
@@ -319,7 +359,7 @@ a {
 }
 
 .auth-card button:hover:not(:disabled) {
-  background: var(--teal-deep);
+  background: var(--primary-deep);
 }
 
 .auth-card button:disabled {
@@ -335,7 +375,7 @@ a {
 }
 
 .switch-link a {
-  color: var(--teal);
+  color: var(--primary);
   font-weight: 600;
   text-decoration: none;
 }
@@ -359,7 +399,7 @@ a {
 }
 
 .navbar {
-  background: var(--teal-deep);
+  background: var(--navbar-bg);
   color: #f4efe4;
   position: sticky;
   top: 0;
@@ -534,7 +574,7 @@ a {
   gap: 5px;
   background: none;
   border: none;
-  color: var(--teal);
+  color: var(--primary);
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -580,7 +620,7 @@ a {
 }
 
 .notification-item.unread {
-  background: var(--teal-tint);
+  background: var(--primary-tint);
 }
 
 .notification-item.alert {
@@ -592,7 +632,7 @@ a {
 }
 
 .notification-item.suggestion {
-  border-left-color: var(--teal);
+  border-left-color: var(--violet);
 }
 
 .notification-item-icon {
@@ -610,7 +650,7 @@ a {
 }
 
 .notification-item.suggestion .notification-item-icon {
-  color: var(--teal);
+  color: var(--violet);
 }
 
 .notification-message {
@@ -638,7 +678,7 @@ a {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--teal);
+  background: var(--primary);
 }
 
 /* ---------- Profile dropdown (opens downward from the navbar) ---------- */
@@ -732,7 +772,7 @@ a {
 }
 
 .profile-dropdown-item.active {
-  color: var(--teal);
+  color: var(--primary);
   font-weight: 600;
 }
 
@@ -802,7 +842,7 @@ a {
     top: 100%;
     left: 0;
     right: 0;
-    background: var(--teal-deep);
+    background: var(--navbar-bg);
     padding: 10px 16px 16px;
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
     z-index: 40;
@@ -837,7 +877,7 @@ a {
 }
 
 .card[role="button"]:hover {
-  border-color: var(--teal);
+  border-color: var(--primary);
   transform: translateY(-2px);
 }
 
@@ -873,14 +913,14 @@ a {
 .performance-form input:focus,
 .performance-form select:focus {
   outline: none;
-  border-color: var(--teal);
-  box-shadow: 0 0 0 3px var(--teal-tint);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-tint);
 }
 
 .performance-form button {
   margin-top: 20px;
   padding: 11px 22px;
-  background: var(--teal);
+  background: var(--primary);
   color: #fff;
   border: none;
   border-radius: var(--radius);
@@ -893,7 +933,7 @@ a {
 }
 
 .performance-form button:hover:not(:disabled) {
-  background: var(--teal-deep);
+  background: var(--primary-deep);
 }
 
 .performance-form button:disabled {
@@ -1039,7 +1079,7 @@ a {
 
 .join-btn {
   padding: 9px 20px;
-  background: var(--teal);
+  background: var(--primary);
   color: #fff;
   border: none;
   border-radius: var(--radius);
@@ -1052,7 +1092,7 @@ a {
 }
 
 .join-btn:hover {
-  background: var(--teal-deep);
+  background: var(--primary-deep);
 }
 
 /* ---------- Voice Study Room ---------- */
@@ -1077,15 +1117,15 @@ a {
 }
 
 .participant-tile.you {
-  border-color: var(--teal);
+  border-color: var(--primary);
 }
 
 .avatar-circle {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: var(--teal-tint);
-  color: var(--teal-deep);
+  background: var(--primary-tint);
+  color: var(--primary-deep);
   font-family: "Fraunces", serif;
   font-size: 22px;
   font-weight: 600;
@@ -1131,7 +1171,7 @@ a {
 }
 
 .mute-btn:hover {
-  border-color: var(--teal);
+  border-color: var(--primary);
 }
 
 .leave-btn {
@@ -1159,8 +1199,8 @@ a {
 
 .performance-form textarea:focus {
   outline: none;
-  border-color: var(--teal);
-  box-shadow: 0 0 0 3px var(--teal-tint);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-tint);
 }
 
 .quiz-question-block {
@@ -1175,7 +1215,7 @@ a {
 .quiz-question-number {
   font-family: "IBM Plex Mono", monospace;
   font-size: 11.5px;
-  color: var(--teal);
+  color: var(--primary);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   margin: 0 0 6px;
@@ -1206,7 +1246,7 @@ a {
 }
 
 .quiz-option:hover {
-  border-color: var(--teal);
+  border-color: var(--primary);
 }
 
 .quiz-option input {
@@ -1228,7 +1268,7 @@ a {
 }
 
 .result-item.correct {
-  border-left-color: var(--teal);
+  border-left-color: var(--success);
 }
 
 .result-item.incorrect {
@@ -1251,7 +1291,7 @@ a {
 }
 
 .correct-icon {
-  color: var(--teal);
+  color: var(--success);
 }
 
 .incorrect-icon {
@@ -1272,7 +1312,7 @@ a {
 }
 
 .result-correct-answer {
-  color: var(--teal-deep);
+  color: var(--primary-deep);
 }
 
 .result-feedback {
@@ -1334,7 +1374,7 @@ a {
 }
 
 .subject-toggle:hover {
-  border-color: var(--teal);
+  border-color: var(--primary);
 }
 
 .subject-toggle.enrolled {
@@ -1373,7 +1413,7 @@ a {
 }
 
 .avatar-dropzone.drag-active {
-  box-shadow: 0 0 0 3px var(--teal), 0 0 0 6px var(--teal-tint);
+  box-shadow: 0 0 0 3px var(--primary), 0 0 0 6px var(--primary-tint);
 }
 
 .avatar-dropzone .profile-avatar {
@@ -1448,9 +1488,9 @@ a {
 }
 
 .join-code-banner {
-  background: var(--teal-tint);
-  color: var(--teal-deep);
-  border: 1px solid var(--teal);
+  background: var(--primary-tint);
+  color: var(--primary-deep);
+  border: 1px solid var(--primary);
   border-radius: var(--radius);
   padding: 12px 16px;
   font-size: 14px;
@@ -1464,8 +1504,8 @@ a {
 
 .session-code {
   font-size: 12px;
-  color: var(--teal-deep);
-  background: var(--teal-tint);
+  color: var(--blue);
+  background: var(--blue-tint);
   padding: 3px 8px;
   border-radius: 6px;
   margin-left: 8px;
@@ -1479,7 +1519,7 @@ a {
 }
 
 .room-code-tag .mono {
-  color: var(--teal-deep);
+  color: var(--primary-deep);
   font-weight: 600;
   letter-spacing: 0.08em;
 }
@@ -1528,7 +1568,7 @@ a {
   font-size: 12px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--teal);
+  color: var(--primary);
   margin: 0 0 4px;
 }
 
@@ -1548,7 +1588,7 @@ a {
 
 .logout-btn:hover {
   background: var(--surface);
-  border-color: var(--teal);
+  border-color: var(--primary);
 }
 
 .card-grid {
@@ -1576,8 +1616,8 @@ a {
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: var(--teal-tint);
-  color: var(--teal-deep);
+  background: var(--primary-tint);
+  color: var(--primary-deep);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1587,6 +1627,16 @@ a {
 .card-icon-badge.card-icon-amber {
   background: var(--amber-tint);
   color: var(--amber);
+}
+
+.card-icon-badge.card-icon-violet {
+  background: var(--violet-tint);
+  color: var(--violet);
+}
+
+.card-icon-badge.card-icon-blue {
+  background: var(--blue-tint);
+  color: var(--blue);
 }
 
 .card p {
@@ -1601,8 +1651,8 @@ a {
   font-family: "IBM Plex Mono", monospace;
   font-size: 11px;
   font-weight: 600;
-  color: var(--teal);
-  background: var(--teal-tint);
+  color: var(--primary);
+  background: var(--primary-tint);
   padding: 5px 11px;
   border-radius: 999px;
 }

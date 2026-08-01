@@ -122,7 +122,7 @@ export default function StudySessions() {
 
       <div className="two-col-row">
         <div className="card">
-          <div className="card-icon-badge"><Mic size={18} /></div>
+          <div className="card-icon-badge card-icon-blue"><Mic size={18} /></div>
           <h3>Start a new session</h3>
           <form onSubmit={handleCreate} className="performance-form">
             <label htmlFor="session-title">Session title</label>

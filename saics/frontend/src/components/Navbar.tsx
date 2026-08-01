@@ -135,7 +135,7 @@ export default function Navbar() {
               ) : (
                 <div
                   className="navbar-avatar-fallback"
-                  style={{ background: student?.avatarColor || "#0e6e66" }}
+                  style={{ background: student?.avatarColor || "#4f46e5" }}
                 >
                   {student?.fullName?.charAt(0).toUpperCase() || "?"}
                 </div>

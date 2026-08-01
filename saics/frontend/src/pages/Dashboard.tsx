@@ -48,7 +48,7 @@ export default function Dashboard() {
           role="button"
           tabIndex={0}
         >
-          <div className="card-icon-badge"><BookOpenCheck size={18} /></div>
+          <div className="card-icon-badge card-icon-violet"><BookOpenCheck size={18} /></div>
           <h3>Quizzes</h3>
           <p>AI-generated quizzes based on your study material.</p>
           <span className="placeholder-tag">View</span>
@@ -61,7 +61,7 @@ export default function Dashboard() {
           role="button"
           tabIndex={0}
         >
-          <div className="card-icon-badge"><Mic size={18} /></div>
+          <div className="card-icon-badge card-icon-blue"><Mic size={18} /></div>
           <h3>Study Sessions</h3>
           <p>Join voice-based collaborative study rooms.</p>
           <span className="placeholder-tag">View</span>
