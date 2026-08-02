@@ -8,6 +8,20 @@ import { toDateString, daysBetween } from "../utils/streakLogic";
 
 const JWT_SECRET = process.env.JWT_SECRET || "dev_secret_change_me";
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
+const COOKIE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // keep in sync with JWT_EXPIRES_IN above
+
+// httpOnly means client-side JS can never read this cookie (unlike the
+// old localStorage approach), which is the whole point — it closes off
+// token theft via any injected/XSS script. `secure` is only enforced in
+// production since local dev runs over plain HTTP.
+function setAuthCookie(res: Response, token: string) {
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: COOKIE_MAX_AGE_MS,
+  });
+}
 
 export async function register(req: Request, res: Response) {
   try {
@@ -33,9 +47,10 @@ export async function register(req: Request, res: Response) {
     // Registering counts as day 1 of the streak.
     await StreakModel.recordActivity(studentId);
 
+    setAuthCookie(res, token);
+
     return res.status(201).json({
       message: "Account created successfully.",
-      token,
       student: { studentId, fullName, email },
     });
   } catch (err) {
@@ -87,9 +102,10 @@ export async function login(req: Request, res: Response) {
     // Logging in counts as daily activity for streak purposes.
     await StreakModel.recordActivity(student.student_id);
 
+    setAuthCookie(res, token);
+
     return res.status(200).json({
       message: "Login successful.",
-      token,
       student: {
         studentId: student.student_id,
         fullName: student.full_name,
@@ -102,4 +118,13 @@ export async function login(req: Request, res: Response) {
     console.error(err);
     return res.status(500).json({ message: "Server error during login." });
   }
+}
+
+export async function logout(_req: Request, res: Response) {
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+  });
+  return res.status(200).json({ message: "Logged out." });
 }

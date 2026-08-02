@@ -32,7 +32,7 @@ describe("POST /api/quizzes/generate", () => {
   it("rejects study material that's too short", async () => {
     const res = await request(app)
       .post("/api/quizzes/generate")
-      .set("Authorization", `Bearer ${authToken}`)
+      .set("Cookie", `token=${authToken}`)
       .send({ subjectId: 1, title: "Quiz", studyText: "too short" });
 
     expect(res.status).toBe(400);
@@ -57,7 +57,7 @@ describe("POST /api/quizzes/generate", () => {
 
     const res = await request(app)
       .post("/api/quizzes/generate")
-      .set("Authorization", `Bearer ${authToken}`)
+      .set("Cookie", `token=${authToken}`)
       .send({
         subjectId: 1,
         title: "Databases Quiz",
@@ -91,7 +91,7 @@ describe("POST /api/quizzes/:id/submit", () => {
 
     const res = await request(app)
       .post("/api/quizzes/55/submit")
-      .set("Authorization", `Bearer ${authToken}`)
+      .set("Cookie", `token=${authToken}`)
       .send({ answers: [{ questionId: 1, studentAnswer: "B" }] });
 
     expect(res.status).toBe(200);
@@ -123,7 +123,7 @@ describe("POST /api/quizzes/:id/submit", () => {
 
     const res = await request(app)
       .post("/api/quizzes/55/submit")
-      .set("Authorization", `Bearer ${authToken}`)
+      .set("Cookie", `token=${authToken}`)
       .send({ answers: [{ questionId: 2, studentAnswer: "Reduces duplicate data" }] });
 
     expect(res.status).toBe(200);
@@ -149,7 +149,7 @@ describe("POST /api/quizzes/:id/submit", () => {
 
     await request(app)
       .post("/api/quizzes/55/submit")
-      .set("Authorization", `Bearer ${authToken}`)
+      .set("Cookie", `token=${authToken}`)
       .send({ answers: [{ questionId: 3, studentAnswer: "B" }] });
 
     expect(mockedNotificationModel.create).not.toHaveBeenCalled();
@@ -181,7 +181,7 @@ describe("POST /api/quizzes/:id/submit", () => {
 
     const res = await request(app)
       .post("/api/quizzes/55/submit")
-      .set("Authorization", `Bearer ${authToken}`)
+      .set("Cookie", `token=${authToken}`)
       // Wrong answer on the only question — 0% score, below the 50% threshold.
       .send({ answers: [{ questionId: 4, studentAnswer: "A" }] });
 

@@ -14,6 +14,13 @@ export const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
+  // mysql2 returns DATE/DATETIME columns as native JS Date objects by
+  // default. Every date field in this codebase (streaks, performance
+  // records, sessions, notifications) is handled as a plain "YYYY-MM-DD"
+  // string, so this keeps the driver's output consistent with that —
+  // without it, date comparisons (like the streak-gap calculation)
+  // silently break.
+  dateStrings: true,
 });
 
 // Quick helper to verify the DB is reachable on startup.

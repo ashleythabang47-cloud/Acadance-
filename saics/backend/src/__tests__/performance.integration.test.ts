@@ -47,7 +47,7 @@ describe("POST /api/performance", () => {
   it("rejects a score greater than maxScore", async () => {
     const res = await request(app)
       .post("/api/performance")
-      .set("Authorization", `Bearer ${authToken}`)
+      .set("Cookie", `token=${authToken}`)
       .send({
         subjectId: 1,
         assessmentName: "Test 1",
@@ -61,7 +61,7 @@ describe("POST /api/performance", () => {
   it("rejects a negative score", async () => {
     const res = await request(app)
       .post("/api/performance")
-      .set("Authorization", `Bearer ${authToken}`)
+      .set("Cookie", `token=${authToken}`)
       .send({
         subjectId: 1,
         assessmentName: "Test 1",
@@ -76,7 +76,7 @@ describe("POST /api/performance", () => {
 
     const res = await request(app)
       .post("/api/performance")
-      .set("Authorization", `Bearer ${authToken}`)
+      .set("Cookie", `token=${authToken}`)
       .send({
         subjectId: 1,
         assessmentName: "Test 1",
@@ -95,7 +95,7 @@ describe("POST /api/performance", () => {
 
     await request(app)
       .post("/api/performance")
-      .set("Authorization", `Bearer ${authToken}`)
+      .set("Cookie", `token=${authToken}`)
       .send({
         subjectId: 1,
         assessmentName: "Test 1",
@@ -112,7 +112,7 @@ describe("POST /api/performance", () => {
 
     const res = await request(app)
       .post("/api/performance")
-      .set("Authorization", `Bearer ${authToken}`)
+      .set("Cookie", `token=${authToken}`)
       .send({
         subjectId: 1,
         assessmentName: "Test 1",

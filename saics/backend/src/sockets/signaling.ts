@@ -4,6 +4,17 @@ import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET || "dev_secret_change_me";
 
+// Minimal "key=value; key2=value2" cookie header parser — the format is
+// simple enough that pulling in a dependency just for this one lookup
+// isn't worth it.
+function parseCookies(header: string): Record<string, string> {
+  return header.split(";").reduce((acc, pair) => {
+    const [key, ...rest] = pair.trim().split("=");
+    if (key) acc[key] = decodeURIComponent(rest.join("="));
+    return acc;
+  }, {} as Record<string, string>);
+}
+
 interface PeerInfo {
   socketId: string;
   studentId: number;
@@ -17,13 +28,21 @@ const rooms = new Map<string, PeerInfo[]>();
 
 export function attachSignaling(httpServer: HttpServer) {
   const io = new Server(httpServer, {
-    cors: { origin: "*" },
+    cors: { origin: true, credentials: true },
   });
 
-  // Verify the JWT on connection so only logged-in students can join a room.
+  // The token now lives in an httpOnly cookie, invisible to client-side
+  // JS — so instead of the client passing it explicitly, we read it out
+  // of the raw cookie header the browser automatically attaches to the
+  // socket handshake request (the same way a normal HTTP request would).
   io.use((socket, next) => {
-    const token = socket.handshake.auth?.token;
+    const rawCookie = socket.handshake.headers.cookie;
+    if (!rawCookie) return next(new Error("No auth token provided."));
+
+    const parsed = parseCookies(rawCookie);
+    const token = parsed.token;
     if (!token) return next(new Error("No auth token provided."));
+
     try {
       const decoded = jwt.verify(token, JWT_SECRET) as { studentId: number };
       (socket as any).studentId = decoded.studentId;

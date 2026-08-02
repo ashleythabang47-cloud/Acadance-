@@ -70,7 +70,7 @@ describe("POST /api/auth/register", () => {
     });
 
     expect(res.status).toBe(201);
-    expect(res.body.token).toBeDefined();
+    expect(res.headers["set-cookie"]?.[0]).toMatch(/^token=/);
     expect(res.body.student.studentId).toBe(42);
     expect(mockedStreakModel.recordActivity).toHaveBeenCalledWith(42);
   });
@@ -133,7 +133,7 @@ describe("POST /api/auth/login", () => {
       .send({ email: "real@example.com", password: "correct-password" });
 
     expect(res.status).toBe(200);
-    expect(res.body.token).toBeDefined();
+    expect(res.headers["set-cookie"]?.[0]).toMatch(/^token=/);
     expect(mockedStreakModel.recordActivity).toHaveBeenCalledWith(7);
   });
 
