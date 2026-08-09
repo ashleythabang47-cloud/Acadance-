@@ -1572,6 +1572,189 @@ a {
   margin: 0 0 4px;
 }
 
+.dashboard-encouragement {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+
+.dashboard-stats-grid {
+  margin-bottom: 20px;
+}
+
+.dashboard-trend-card {
+  margin-bottom: 0;
+}
+
+.dashboard-trend-card .stat-label {
+  margin-bottom: 4px;
+}
+
+/* ---------- Continue-learning CTA ---------- */
+.continue-card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 16px;
+  padding: 22px 26px;
+  margin-bottom: 24px;
+  cursor: pointer;
+  border: none;
+}
+
+.continue-card-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.continue-card-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.continue-card-title {
+  margin: 0 0 4px;
+  font-family: "Fraunces", serif;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.continue-card-body {
+  margin: 0;
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.5;
+}
+
+.continue-card-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  color: var(--primary-deep);
+  border: none;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .continue-card {
+    flex-wrap: wrap;
+  }
+  .continue-card-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ---------- Circular progress rings ---------- */
+.dashboard-rings-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.ring-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+}
+
+.circular-progress {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.circular-progress-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.circular-progress-value {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* ---------- Two-column secondary section (trend + mastery) ---------- */
+.dashboard-two-col {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin-bottom: 24px;
+  align-items: start;
+}
+
+.mastery-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.mastery-row-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+
+.mastery-bar-track {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.mastery-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+/* ---------- Heatmap-style streak squares (LeetCode-inspired) ---------- */
+.heatmap-row {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+.heatmap-square {
+  flex: 1;
+  aspect-ratio: 1;
+  border-radius: 4px;
+  background: var(--line);
+}
+
+.heatmap-square.active {
+  background: var(--amber);
+}
+
 .logout-btn {
   background: none;
   border: 1px solid var(--line);

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   LineChart,
@@ -11,19 +11,22 @@ import {
   BookOpenCheck,
   Mic,
   Flame,
-  Target,
-  Trophy,
   ClipboardList,
+  ArrowRight,
+  Sparkles,
+  Target,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { api } from "../api/client";
 import AppLayout from "../components/AppLayout";
 import Spinner from "../components/Spinner";
+import CircularProgress from "../components/CircularProgress";
 import { useStreak } from "../hooks/useStreak";
 import { handleKeyActivation } from "../utils/a11y";
 
 interface PerformanceRecord {
   record_id: number;
+  subject_name: string;
   score: number;
   max_score: number;
   assessment_date: string;
@@ -62,11 +65,10 @@ export default function Dashboard() {
     loadStats();
   }, []);
 
-  // Scale each day's raw activity count into a bar height percentage.
-  // Capped so a handful of actions in one day still reads as "full".
   const bars = streakData?.last7Days.map((d) => ({
     date: d.date,
     height: d.count === 0 ? 8 : Math.min(100, 30 + d.count * 25),
+    active: d.count > 0,
   })) || [];
 
   const avgPerformance =
@@ -84,16 +86,31 @@ export default function Dashboard() {
         )
       : null;
 
-  // Oldest-first, last 8 results, for a small trend line.
   const trendData = [...records]
     .sort((a, b) => a.assessment_date.localeCompare(b.assessment_date))
     .slice(-8)
     .map((r) => ({ percentage: Math.round((r.score / r.max_score) * 100) }));
 
-  const currentStreak = streakData?.streak.current_streak ?? 0;
+  // Group results by subject to surface where a student is strongest /
+  // weakest — the Quizlet-style "mastery per topic" pattern.
+  const subjectMastery = useMemo(() => {
+    const grouped = new Map<string, { total: number; count: number }>();
+    for (const r of records) {
+      const pct = (r.score / r.max_score) * 100;
+      const entry = grouped.get(r.subject_name) || { total: 0, count: 0 };
+      entry.total += pct;
+      entry.count += 1;
+      grouped.set(r.subject_name, entry);
+    }
+    return Array.from(grouped.entries())
+      .map(([subject, { total, count }]) => ({ subject, average: Math.round(total / count) }))
+      .sort((a, b) => a.average - b.average)
+      .slice(0, 5);
+  }, [records]);
 
-  // A short, honest message that actually reflects what's happening,
-  // rather than generic praise regardless of activity.
+  const currentStreak = streakData?.streak.current_streak ?? 0;
+  const weakestSubject = subjectMastery[0];
+
   function getEncouragement(): string {
     if (records.length === 0 && quizHistory.length === 0) {
       return "Log your first result or take a quiz to start tracking your progress.";
@@ -110,6 +127,39 @@ export default function Dashboard() {
     return "Every session adds up. Keep going.";
   }
 
+  // A single, prominent "what should I do next" card — driven by real
+  // data rather than a generic static prompt.
+  function getContinueCard() {
+    if (records.length === 0 && quizHistory.length === 0) {
+      return {
+        title: "Let's get started",
+        body: "Log your first result to start tracking your progress across subjects.",
+        cta: "Add a result",
+        icon: Sparkles,
+        onClick: () => navigate("/performance"),
+      };
+    }
+    if (weakestSubject && weakestSubject.average < 65) {
+      return {
+        title: `Focus area: ${weakestSubject.subject}`,
+        body: `Your average here is ${weakestSubject.average}% — a quiz on this subject could help close the gap.`,
+        cta: "Take a quiz",
+        icon: Target,
+        onClick: () => navigate("/quizzes"),
+      };
+    }
+    return {
+      title: "Keep the streak alive",
+      body: "You're doing well across the board — take a quiz or log today's result to stay on track.",
+      cta: "Take a quiz",
+      icon: Sparkles,
+      onClick: () => navigate("/quizzes"),
+    };
+  }
+
+  const continueCard = getContinueCard();
+  const ContinueIcon = continueCard.icon;
+
   return (
     <AppLayout>
       <header className="topbar">
@@ -120,17 +170,34 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* Quick stats — real numbers, not decoration */}
-      <div className="streak-summary-grid dashboard-stats-grid">
-        <div className="card">
-          <div className="card-icon-badge"><Target size={18} /></div>
-          <p className="stat-label">Average score</p>
-          <p className="stat-value mono">{avgPerformance !== null ? `${avgPerformance}%` : "—"}</p>
+      {!statsLoading && (
+        <div
+          className="continue-card"
+          onClick={continueCard.onClick}
+          onKeyDown={handleKeyActivation(continueCard.onClick)}
+          role="button"
+          tabIndex={0}
+        >
+          <div className="continue-card-icon"><ContinueIcon size={22} /></div>
+          <div className="continue-card-text">
+            <p className="continue-card-title">{continueCard.title}</p>
+            <p className="continue-card-body">{continueCard.body}</p>
+          </div>
+          <button className="continue-card-btn" tabIndex={-1}>
+            {continueCard.cta}
+            <ArrowRight size={15} />
+          </button>
         </div>
-        <div className="card">
-          <div className="card-icon-badge card-icon-violet"><Trophy size={18} /></div>
+      )}
+
+      <div className="dashboard-rings-row">
+        <div className="card ring-card">
+          <CircularProgress value={avgPerformance ?? 0} color="var(--primary)" />
+          <p className="stat-label">Average score</p>
+        </div>
+        <div className="card ring-card">
+          <CircularProgress value={avgQuizScore ?? 0} color="var(--violet)" />
           <p className="stat-label">Quiz average</p>
-          <p className="stat-value mono">{avgQuizScore !== null ? `${avgQuizScore}%` : "—"}</p>
         </div>
         <div className="card">
           <div className="card-icon-badge card-icon-amber"><Flame size={18} /></div>
@@ -144,24 +211,55 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Trend sparkline — only shown once there's enough data to trend */}
-      {!statsLoading && trendData.length >= 2 && (
-        <div className="card dashboard-trend-card">
-          <p className="stat-label">Recent performance trend</p>
-          <ResponsiveContainer width="100%" height={70}>
-            <LineChart data={trendData}>
-              <YAxis domain={[0, 100]} hide />
-              <Line
-                type="monotone"
-                dataKey="percentage"
-                stroke="var(--primary)"
-                strokeWidth={2.5}
-                dot={false}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      )}
+      <div className="dashboard-two-col">
+        {!statsLoading && trendData.length >= 2 && (
+          <div className="card dashboard-trend-card">
+            <p className="stat-label">Recent performance trend</p>
+            <ResponsiveContainer width="100%" height={90}>
+              <LineChart data={trendData}>
+                <YAxis domain={[0, 100]} hide />
+                <Line
+                  type="monotone"
+                  dataKey="percentage"
+                  stroke="var(--primary)"
+                  strokeWidth={2.5}
+                  dot={false}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
+        {subjectMastery.length > 0 && (
+          <div className="card">
+            <p className="stat-label">Mastery by subject</p>
+            <div className="mastery-list">
+              {subjectMastery.map((s) => (
+                <div key={s.subject} className="mastery-row">
+                  <div className="mastery-row-header">
+                    <span>{s.subject}</span>
+                    <span className="mono">{s.average}%</span>
+                  </div>
+                  <div className="mastery-bar-track">
+                    <div
+                      className="mastery-bar-fill"
+                      style={{
+                        width: `${s.average}%`,
+                        background:
+                          s.average < 50
+                            ? "var(--brick)"
+                            : s.average < 75
+                            ? "var(--amber)"
+                            : "var(--success)",
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
       <div className="card-grid">
         <div
@@ -216,9 +314,13 @@ export default function Dashboard() {
             <Spinner />
           ) : (
             <>
-              <div className="cadence-bars">
+              <div className="heatmap-row">
                 {bars.map((b, i) => (
-                  <div key={i} className="bar" style={{ height: `${b.height}%` }} />
+                  <div
+                    key={i}
+                    className={`heatmap-square ${b.active ? "active" : ""}`}
+                    style={b.active ? { opacity: Math.max(0.35, b.height / 100) } : undefined}
+                  />
                 ))}
               </div>
               <div className="streak-count">
