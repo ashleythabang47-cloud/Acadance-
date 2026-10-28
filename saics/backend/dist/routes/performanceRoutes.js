@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const authMiddleware_1 = require("../middleware/authMiddleware");
+const performanceController_1 = require("../controllers/performanceController");
+const router = (0, express_1.Router)();
+router.get("/", authMiddleware_1.requireAuth, performanceController_1.listMyPerformance);
+router.post("/", authMiddleware_1.requireAuth, performanceController_1.createPerformanceRecord);
+router.put("/:id", authMiddleware_1.requireAuth, performanceController_1.updatePerformanceRecord);
+router.delete("/:id", authMiddleware_1.requireAuth, performanceController_1.deletePerformanceRecord);
+exports.default = router;

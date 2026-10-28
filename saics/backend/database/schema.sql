@@ -73,6 +73,8 @@ CREATE TABLE quiz_questions (
     question_text   TEXT NOT NULL,
     question_type   ENUM('multiple_choice', 'short_answer', 'long_answer') NOT NULL,
     correct_answer  TEXT,                         -- reference answer for auto-marking
+    model_answer    TEXT,
+    rubric          JSON,
     option_a        VARCHAR(255),
     option_b        VARCHAR(255),
     option_c        VARCHAR(255),
@@ -86,6 +88,7 @@ CREATE TABLE quiz_attempts (
     student_id      INT NOT NULL,
     score           DECIMAL(5,2),
     max_score       DECIMAL(5,2),
+    grading_status  ENUM('pending', 'completed') NOT NULL DEFAULT 'pending',
     started_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     completed_at    TIMESTAMP NULL,
     FOREIGN KEY (quiz_id) REFERENCES quizzes(quiz_id) ON DELETE CASCADE,
@@ -98,6 +101,11 @@ CREATE TABLE quiz_attempt_answers (
     question_id     INT NOT NULL,
     student_answer  TEXT,
     is_correct      BOOLEAN,
+    score           DECIMAL(5,2),
+    max_score       DECIMAL(5,2),
+    feedback        TEXT,
+    criterion_comments JSON,
+    grading_status  ENUM('pending', 'completed') NOT NULL DEFAULT 'pending',
     FOREIGN KEY (attempt_id) REFERENCES quiz_attempts(attempt_id) ON DELETE CASCADE,
     FOREIGN KEY (question_id) REFERENCES quiz_questions(question_id) ON DELETE CASCADE
 );

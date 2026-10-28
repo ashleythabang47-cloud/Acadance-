@@ -1,0 +1,14 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const authMiddleware_1 = require("../middleware/authMiddleware");
+const upload_1 = require("../config/upload");
+const studentController_1 = require("../controllers/studentController");
+const router = (0, express_1.Router)();
+router.get("/me", authMiddleware_1.requireAuth, studentController_1.getMyProfile);
+router.put("/me", authMiddleware_1.requireAuth, studentController_1.updateMyProfile);
+router.post("/me/subjects", authMiddleware_1.requireAuth, studentController_1.enrollInSubject);
+router.delete("/me/subjects/:subjectId", authMiddleware_1.requireAuth, studentController_1.unenrollFromSubject);
+router.post("/me/avatar", authMiddleware_1.requireAuth, upload_1.avatarUpload.single("avatar"), studentController_1.uploadAvatar);
+router.delete("/me/avatar", authMiddleware_1.requireAuth, studentController_1.removeAvatar);
+exports.default = router;

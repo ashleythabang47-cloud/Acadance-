@@ -33,6 +33,9 @@ export default function Quizzes() {
   const [title, setTitle] = useState("");
   const [studyText, setStudyText] = useState("");
   const [difficulty, setDifficulty] = useState("medium");
+  const [questionType, setQuestionType] = useState<"multiple_choice" | "long_answer">(
+    "multiple_choice"
+  );
   const [numQuestions, setNumQuestions] = useState("5");
   const [generating, setGenerating] = useState(false);
 
@@ -65,8 +68,9 @@ export default function Quizzes() {
       const res = await api.post("/quizzes/generate", {
         subjectId: Number(subjectId),
         title,
-        studyText,
+        topic: studyText,
         difficulty,
+        questionType,
         numQuestions: Number(numQuestions),
       });
       setTitle("");
@@ -93,8 +97,7 @@ export default function Quizzes() {
       <div className="card" style={{ marginBottom: 24 }}>
         <h3>Generate a new quiz</h3>
           <p style={{ marginTop: -4, marginBottom: 16, fontSize: 13, color: "var(--ink-soft)" }}>
-            Paste in your study notes or a section of your textbook — the AI will pull out the
-            key concepts and build questions from them.
+            Enter a topic or paste study notes. Choose multiple-choice or long-answer questions.
           </p>
           <form onSubmit={handleGenerate} className="performance-form">
             <div className="form-row">
@@ -129,17 +132,30 @@ export default function Quizzes() {
               </div>
             </div>
 
-            <label htmlFor="quiz-study-text">Study material</label>
+            <label htmlFor="quiz-study-text">Topic or study material</label>
             <textarea
               id="quiz-study-text"
               value={studyText}
               onChange={(e) => setStudyText(e.target.value)}
-              placeholder="Paste your notes or textbook section here (at least a few sentences)..."
+              placeholder="e.g. Photosynthesis, or paste your notes..."
               rows={6}
               required
             />
 
             <div className="form-row">
+              <div>
+                <label htmlFor="quiz-question-type">Question type</label>
+                <select
+                  id="quiz-question-type"
+                  value={questionType}
+                  onChange={(e) =>
+                    setQuestionType(e.target.value as "multiple_choice" | "long_answer")
+                  }
+                >
+                  <option value="multiple_choice">Multiple choice</option>
+                  <option value="long_answer">Long answer</option>
+                </select>
+              </div>
               <div>
                 <label htmlFor="quiz-difficulty">Difficulty</label>
                 <select

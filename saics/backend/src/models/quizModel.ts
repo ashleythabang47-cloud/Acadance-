@@ -1,6 +1,7 @@
 import { pool } from "../config/db";
 import { RowDataPacket, ResultSetHeader } from "mysql2";
 import { GeneratedQuestion } from "../services/aiService";
+import { CriterionComment, RubricCriterion } from "../services/grader";
 
 export interface Quiz {
   quiz_id: number;
@@ -23,7 +24,11 @@ export interface QuizQuestion {
   option_b: string | null;
   option_c: string | null;
   option_d: string | null;
+  model_answer?: string | null;
+  rubric?: RubricCriterion[] | string | null;
 }
+
+export type AttemptGradingStatus = "pending" | "completed";
 
 export const QuizModel = {
   async createQuiz(
@@ -42,8 +47,8 @@ export const QuizModel = {
     for (const q of questions) {
       await pool.query(
         `INSERT INTO quiz_questions
-          (quiz_id, question_text, question_type, correct_answer, option_a, option_b, option_c, option_d)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          (quiz_id, question_text, question_type, correct_answer, option_a, option_b, option_c, option_d, model_answer, rubric)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           quizId,
           q.question_text,
@@ -53,6 +58,8 @@ export const QuizModel = {
           q.option_b || null,
           q.option_c || null,
           q.option_d || null,
+          q.model_answer || null,
+          q.rubric ? JSON.stringify(q.rubric) : null,
         ]
       );
     }
@@ -113,31 +120,54 @@ export const QuizModel = {
     attemptId: number,
     questionId: number,
     studentAnswer: string,
-    isCorrect: boolean
+    score: number | null,
+    maxScore: number,
+    feedback: string | null,
+    criterionComments: CriterionComment[] | null,
+    gradingStatus: AttemptGradingStatus,
+    isCorrect: boolean | null
   ): Promise<void> {
     await pool.query(
-      `INSERT INTO quiz_attempt_answers (attempt_id, question_id, student_answer, is_correct)
-       VALUES (?, ?, ?, ?)`,
-      [attemptId, questionId, studentAnswer, isCorrect]
+      `INSERT INTO quiz_attempt_answers
+        (attempt_id, question_id, student_answer, is_correct, score, max_score, feedback, criterion_comments, grading_status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        attemptId,
+        questionId,
+        studentAnswer,
+        isCorrect,
+        score,
+        maxScore,
+        feedback,
+        criterionComments ? JSON.stringify(criterionComments) : null,
+        gradingStatus,
+      ]
     );
   },
 
-  async completeAttempt(attemptId: number, score: number, maxScore: number): Promise<void> {
+  async completeAttempt(
+    attemptId: number,
+    score: number | null,
+    maxScore: number,
+    gradingStatus: AttemptGradingStatus
+  ): Promise<void> {
     await pool.query(
-      `UPDATE quiz_attempts SET score = ?, max_score = ?, completed_at = CURRENT_TIMESTAMP
+      `UPDATE quiz_attempts
+       SET score = ?, max_score = ?, grading_status = ?,
+           completed_at = IF(? = 'completed', CURRENT_TIMESTAMP, NULL)
        WHERE attempt_id = ?`,
-      [score, maxScore, attemptId]
+      [score, maxScore, gradingStatus, gradingStatus, attemptId]
     );
   },
 
   async getAttemptHistory(studentId: number): Promise<RowDataPacket[]> {
     const [rows] = await pool.query<RowDataPacket[]>(
-      `SELECT qa.attempt_id, qa.score, qa.max_score, qa.completed_at, q.title, s.subject_name
+      `SELECT qa.attempt_id, qa.score, qa.max_score, qa.completed_at, qa.grading_status, q.title, s.subject_name
        FROM quiz_attempts qa
        JOIN quizzes q ON q.quiz_id = qa.quiz_id
        JOIN subjects s ON s.subject_id = q.subject_id
-       WHERE qa.student_id = ? AND qa.completed_at IS NOT NULL
-       ORDER BY qa.completed_at DESC`,
+       WHERE qa.student_id = ?
+       ORDER BY qa.started_at DESC`,
       [studentId]
     );
     return rows;

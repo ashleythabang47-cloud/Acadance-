@@ -1,0 +1,14 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const authMiddleware_1 = require("../middleware/authMiddleware");
+const studySessionController_1 = require("../controllers/studySessionController");
+const router = (0, express_1.Router)();
+router.get("/", authMiddleware_1.requireAuth, studySessionController_1.listActiveSessions);
+router.post("/", authMiddleware_1.requireAuth, studySessionController_1.createSession);
+router.post("/join-by-code", authMiddleware_1.requireAuth, studySessionController_1.joinByCode);
+router.get("/:id", authMiddleware_1.requireAuth, studySessionController_1.getSession);
+router.post("/:id/join", authMiddleware_1.requireAuth, studySessionController_1.joinSession);
+router.post("/:id/leave", authMiddleware_1.requireAuth, studySessionController_1.leaveSession);
+router.post("/:id/end", authMiddleware_1.requireAuth, studySessionController_1.endSession);
+exports.default = router;

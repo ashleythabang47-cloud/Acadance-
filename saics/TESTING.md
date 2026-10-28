@@ -8,8 +8,8 @@ cd backend
 npm test
 ```
 
-48 tests across 6 suites, all using mocked models and a mocked AI service —
-**no live database connection or Anthropic API credits are required** to run
+Tests across the backend suites use mocked models and a mocked AI service —
+**no live database connection or AI provider credentials are required** to run
 these.
 
 | Suite | What it covers |
@@ -17,6 +17,7 @@ these.
 | `grading.test.ts` | Pure logic: MCQ answer comparison, percentage calculation, score validation |
 | `streakLogic.test.ts` | The streak rule itself — extending on consecutive days, resetting after a gap, not double-counting same-day activity, preserving longest streak |
 | `aiService.test.ts` | Defensive JSON extraction from AI responses (handles prose wrapping, markdown fences) |
+| `grader.test.ts` | Provider response parsing, generation caching, provider fallback, and long-answer grading |
 | `auth.integration.test.ts` | Register/login validation, duplicate email rejection, wrong-password rejection, successful token issuance, streak-reset reminder notification (and that it does NOT fire when the streak is still active) |
 | `performance.integration.test.ts` | Auth requirement, score validation (negative, over max), successful record creation, low-score alert notification (and that it does NOT fire for a passing score) |
 | `quiz.integration.test.ts` | Study-text length validation, quiz generation (AI mocked), MCQ grading (confirms **no AI call** is made), short-answer grading (confirms AI **is** called), low-score suggestion notification (and that it does NOT fire for a passing score) |
@@ -38,8 +39,8 @@ worth doing manually before a demo — see the checklist below.
 ## Manual test checklist — AI Quiz module
 
 The AI quiz generation and grading endpoints are mocked in the automated
-suite (to avoid spending API credits on every test run), so they still need
-a real pass once Anthropic credits are available. Run through this once:
+suite (to avoid spending API credits on every test run), so a real provider
+configuration is needed for this manual pass:
 
 - [ ] Generate a quiz from a short paste of real study notes (~200 words) —
       confirm the returned questions are actually relevant to the material,
@@ -56,9 +57,9 @@ a real pass once Anthropic credits are available. Run through this once:
       confirm it's marked wrong with reasonable feedback text
 - [ ] Submit a quiz with a mix of MCQ and short-answer — confirm the score
       reflects both correctly
-- [ ] Try generating a quiz with study text under 50 characters — confirm
-      the 400 error appears in the UI before any API call is made
-- [ ] Check the Anthropic console dashboard after a test session — confirm
+- [ ] Submit the API's `studyText` field with fewer than 50 characters — confirm
+      it returns 400 before any provider call; the UI also accepts short topics
+- [ ] Check the configured provider dashboard after a test session — confirm
       the number of API calls roughly matches (1 generation call + 1 grading
       call per short-answer question, 0 for MCQ-only submissions)
 

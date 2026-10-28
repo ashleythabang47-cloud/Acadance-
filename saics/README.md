@@ -8,7 +8,7 @@
 <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript"/>
 <img src="https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express"/>
 <img src="https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql"/>
-<img src="https://img.shields.io/badge/Anthropic_API-D97757?style=for-the-badge"/>
+<img src="https://img.shields.io/badge/AI_Providers-Groq%20%7C%20Gemini%20%7C%20Ollama-6D5AE6?style=for-the-badge"/>
 <img src="https://img.shields.io/badge/JWT-Authentication-blue?style=for-the-badge"/>
 
 </div>
@@ -34,7 +34,7 @@ The name reflects the core idea: **academic + cadence** — building a sustainab
 | Academic Tracking |  Complete | Log test/assignment results per subject, view trends on an interactive chart |
 | Streaks & Gamification |  Complete | Real activity-based streak tracking (not a manual counter) — login, logging results, quizzes, and study sessions all count |
 | Voice Study Sessions |  Complete | Real-time collaborative study rooms via WebRTC, joinable by link or a shareable 6-character code |
-| AI Quiz Generation |  Complete | Quizzes generated from pasted study material via the Anthropic API, with AI-assisted grading of open-ended answers |
+| AI Quiz Generation |  Complete | Quizzes generated from study material and open-ended answers graded with Groq, Gemini, or local Ollama providers |
 | Student Profiles | Complete | Editable bio, academic year, avatar color, and subject enrollment |
 | Notifications & Recommendations |  Complete | Rules-based alerts for low scores, streak-reset reminders, and quiz-retry suggestions — triggered by real activity, not manually created |
 | Predictive Analytics |  Planned | At-risk student identification from historical performance data |
@@ -45,7 +45,7 @@ The name reflects the core idea: **academic + cadence** — building a sustainab
 - **Backend:** Node.js + Express + TypeScript, Socket.IO (WebRTC signaling)
 - **Database:** MySQL
 - **Auth:** JWT + bcrypt password hashing
-- **AI:** Anthropic API — Claude Sonnet 5 for quiz generation, Claude Haiku 4.5 for grading open-ended answers
+- **AI:** Groq and Gemini cloud APIs with local Ollama fallback for quiz generation and open-ended grading
 
 ## Project Structure
 
@@ -58,13 +58,14 @@ acadance/
 │   │   ├── phase3_streaks.sql        # Adds daily_activity table for streaks
 │   │   ├── phase_profile.sql         # Adds bio/academic_year/avatar_color to students
 │   │   ├── phase_join_codes.sql      # Adds join_code to study_sessions
-│   │   └── phase_avatar_upload.sql   # Adds avatar_url to students
+│   │   ├── phase_avatar_upload.sql   # Adds avatar_url to students
+│   │   └── phase_ai_grading.sql      # AI grading columns for existing databases
 │   ├── src/
 │   │   ├── config/db.ts              # MySQL connection pool
 │   │   ├── models/                   # Database queries per entity
 │   │   ├── controllers/              # Request handlers
 │   │   ├── middleware/               # JWT auth guard
-│   │   ├── services/aiService.ts     # Anthropic API integration
+│   │   ├── services/aiService.ts     # AI quiz generation and grading providers
 │   │   ├── sockets/signaling.ts      # WebRTC signaling server
 │   │   ├── routes/                   # auth, students, subjects, performance,
 │   │   │                             # streaks, study-sessions, quizzes
@@ -88,7 +89,7 @@ acadance/
 - [Node.js](https://nodejs.org) (LTS recommended)
 - MySQL (via [XAMPP](https://www.apachefriends.org/) or standalone)
 - Git
-- An [Anthropic API key](https://console.anthropic.com) (only needed for the Quiz module)
+- A [Groq API key](https://console.groq.com/keys) or [Gemini API key](https://aistudio.google.com/apikey) for cloud AI; alternatively, install [Ollama](https://ollama.com/) locally
 
 ### 1. Database setup
 Using phpMyAdmin (or the MySQL CLI), run the SQL files in this order:
@@ -100,6 +101,9 @@ backend/database/phase_profile.sql
 backend/database/phase_join_codes.sql
 backend/database/phase_avatar_upload.sql
 ```
+For databases created before AI grading was added, apply
+`backend/database/phase_ai_grading.sql` once instead of recreating the database.
+Fresh databases already get those columns from `schema.sql`.
 
 ### 2. Backend
 ```bash
@@ -115,8 +119,14 @@ DB_PASSWORD=
 DB_NAME=saics_db
 JWT_SECRET=replace_with_a_long_random_string
 JWT_EXPIRES_IN=7d
-ANTHROPIC_API_KEY=your_anthropic_api_key
+GROQ_API_KEY=
+GEMINI_API_KEY=
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=llama3.2
 ```
+The backend tries configured Groq first, then Gemini, then Ollama. A cloud API
+key is not required when Ollama is installed and the selected model is available
+locally.
 Then:
 ```bash
 npm install
@@ -140,7 +150,10 @@ Open the frontend URL, register an account, and you're in.
 cd backend
 npm test
 ```
-48 automated tests covering validation logic, the streak calculation rule, controller behavior, and the notification/recommendation triggers — all with mocked models and a mocked AI service, so no live database or API credits are needed to run them. See [TESTING.md](./TESTING.md) for full coverage details and the manual test checklist for the AI quiz and voice session features.
+Automated tests cover validation logic, streak calculation, controller behavior,
+AI provider parsing and grading, and notification triggers. The tests use
+mocked models and providers, so no live database or AI API credentials are
+needed. See [TESTING.md](./TESTING.md) for details and manual test checklists.
 
 ## API Reference
 
@@ -214,7 +227,7 @@ flowchart TD
         DB[(MySQL Database)]
     end
 
-    Quiz --> Anthropic[Anthropic API<br/>Sonnet 5 + Haiku 4.5]
+    Quiz --> Providers[Groq / Gemini / Ollama]
     Voice --> RTC[Peer-to-peer WebRTC Audio]
     Analytics -.-> Prediction[Risk Analysis Engine<br/>planned]
 ```
@@ -314,7 +327,7 @@ graph TD
     Authentication --> JWT
     AcademicTracking --> Performance
     AcademicTracking --> Subjects
-    AIQuiz --> AnthropicAPI[Anthropic API]
+    AIQuiz --> AIProviders[Groq / Gemini / Ollama]
     Voice --> WebRTC
     Voice --> JoinCodes[Join Codes]
     Analytics -.-> Prediction[planned]
@@ -339,7 +352,7 @@ This project follows a phased build, matching the dissertation timeline:
 ## Known Limitations
 
 - **Voice sessions use a full-mesh WebRTC topology** — every participant connects directly to every other participant. This works well for small groups (2–5 people) but doesn't scale to large rooms; a production version would use a media server (SFU) instead.
-- **AI quiz grading costs API credits per open-ended answer graded** — multiple-choice questions are graded for free with simple string comparison, but short-answer grading calls the Anthropic API.
+- **AI quiz grading uses provider requests per open-ended answer** — multiple-choice questions are graded locally with simple string comparison; open-ended grading uses the configured AI provider.
 
 ## Author
 

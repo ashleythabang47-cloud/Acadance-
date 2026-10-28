@@ -18,9 +18,26 @@ interface Question {
 
 interface ResultItem {
   questionId: number;
-  isCorrect: boolean;
-  feedback?: string;
+  isCorrect: boolean | null;
+  score: number | null;
+  maxScore: number;
+  feedback: string | null;
+  criterionComments: {
+    criterion: string;
+    points: number;
+    maxPoints: number;
+    comment: string;
+  }[] | null;
+  gradingStatus: "pending" | "completed";
   correctAnswer: string | null;
+}
+
+interface QuizResult {
+  score: number | null;
+  maxScore: number;
+  gradingStatus: "pending" | "completed";
+  message?: string;
+  results: ResultItem[];
 }
 
 export default function TakeQuiz() {
@@ -33,9 +50,7 @@ export default function TakeQuiz() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [result, setResult] = useState<{ score: number; maxScore: number; results: ResultItem[] } | null>(
-    null
-  );
+  const [result, setResult] = useState<QuizResult | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -69,7 +84,7 @@ export default function TakeQuiz() {
         })),
       };
       const res = await api.post(`/quizzes/${id}/submit`, payload);
-      setResult(res.data);
+      setResult(res.data as QuizResult);
     } catch (err: any) {
       setError(err.response?.data?.message || "Could not submit your answers.");
     } finally {
@@ -94,9 +109,16 @@ export default function TakeQuiz() {
           <Spinner label="Loading quiz..." />
         ) : result ? (
           <div className="card">
+            {result.message && (
+              <div className="error-banner" style={{ marginBottom: 16 }}>
+                {result.message}
+              </div>
+            )}
             <h3 className="quiz-score-heading">
               <Trophy size={20} />
-              Score: {result.score}/{result.maxScore}
+              {result.gradingStatus === "pending"
+                ? "Pending grading"
+                : `Score: ${result.score}/${result.maxScore}`}
             </h3>
             <div className="quiz-results">
               {questions.map((q) => {
@@ -104,10 +126,16 @@ export default function TakeQuiz() {
                 return (
                   <div
                     key={q.question_id}
-                    className={`result-item ${r?.isCorrect ? "correct" : "incorrect"}`}
+                    className={`result-item ${
+                      r?.gradingStatus === "pending"
+                        ? "pending"
+                        : r?.isCorrect
+                          ? "correct"
+                          : "incorrect"
+                    }`}
                   >
                     <p className="result-question">
-                      {r?.isCorrect ? (
+                      {r?.gradingStatus === "pending" ? null : r?.isCorrect ? (
                         <CheckCircle2 size={16} className="result-icon correct-icon" />
                       ) : (
                         <XCircle size={16} className="result-icon incorrect-icon" />
@@ -117,12 +145,27 @@ export default function TakeQuiz() {
                     <p className="result-your-answer mono">
                       Your answer: {answers[q.question_id] || "(blank)"}
                     </p>
-                    {!r?.isCorrect && r?.correctAnswer && (
+                    {r && (
+                      <p className="result-your-answer">
+                        Points: {r.score === null ? "Pending" : r.score}/{r.maxScore}
+                      </p>
+                    )}
+                    {r?.gradingStatus === "completed" && !r.isCorrect && r.correctAnswer && (
                       <p className="result-correct-answer mono">
                         Correct answer: {r.correctAnswer}
                       </p>
                     )}
                     {r?.feedback && <p className="result-feedback">{r.feedback}</p>}
+                    {r?.criterionComments && (
+                      <ul className="criterion-comments">
+                        {r.criterionComments.map((item) => (
+                          <li key={item.criterion}>
+                            <strong>{item.criterion}: {item.points}/{item.maxPoints} pts</strong>
+                            <span>{item.comment}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 );
               })}
@@ -160,6 +203,13 @@ export default function TakeQuiz() {
                       );
                     })}
                   </div>
+                ) : q.question_type === "long_answer" ? (
+                  <textarea
+                    value={answers[q.question_id] || ""}
+                    onChange={(e) => handleAnswerChange(q.question_id, e.target.value)}
+                    placeholder="Write your answer"
+                    rows={5}
+                  />
                 ) : (
                   <input
                     type="text"
