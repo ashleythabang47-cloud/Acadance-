@@ -4,7 +4,7 @@
 
 ### Student Academic Insights & Collaborative System
 
-<img src="https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react"/>
+<img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react"/>
 <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript"/>
 <img src="https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express"/>
 <img src="https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql"/>
@@ -30,18 +30,19 @@ The name reflects the core idea: **academic + cadence** — building a sustainab
 
 | Module | Status | Description |
 |---|---|---|
-| Authentication | Complete | Secure registration/login with hashed passwords and JWT sessions |
+| Authentication | Complete | Secure registration/login with hashed passwords, password-strength checks, and email verification |
+| Admin Portal | Complete | Role-protected administration, user moderation, audit logs, content review, AI monitoring, system health, and announcements |
 | Academic Tracking |  Complete | Log test/assignment results per subject, view trends on an interactive chart |
 | Streaks & Gamification |  Complete | Real activity-based streak tracking (not a manual counter) — login, logging results, quizzes, and study sessions all count |
 | Voice Study Sessions |  Complete | Real-time collaborative study rooms via WebRTC, joinable by link or a shareable 6-character code |
 | AI Quiz Generation |  Complete | Quizzes generated from study material and open-ended answers graded with Groq, Gemini, or local Ollama providers |
 | Student Profiles | Complete | Editable bio, academic year, avatar color, and subject enrollment |
 | Notifications & Recommendations |  Complete | Rules-based alerts for low scores, streak-reset reminders, and quiz-retry suggestions — triggered by real activity, not manually created |
-| Predictive Analytics |  Planned | At-risk student identification from historical performance data |
+| Risk Analysis | Complete | Explainable rule-based student risk scores using performance, quiz and activity trends |
 
 ## Tech Stack
 
-- **Frontend:** React 18 + TypeScript, Vite, React Router, Axios, Recharts, Socket.IO client
+- **Frontend:** React 19 + TypeScript, Vite, React Router, Axios, Recharts, Socket.IO client
 - **Backend:** Node.js + Express + TypeScript, Socket.IO (WebRTC signaling)
 - **Database:** MySQL
 - **Auth:** JWT + bcrypt password hashing
@@ -59,13 +60,19 @@ acadance/
 │   │   ├── phase_profile.sql         # Adds bio/academic_year/avatar_color to students
 │   │   ├── phase_join_codes.sql      # Adds join_code to study_sessions
 │   │   ├── phase_avatar_upload.sql   # Adds avatar_url to students
-│   │   └── phase_ai_grading.sql      # AI grading columns for existing databases
+│   │   ├── phase_ai_grading.sql      # AI grading columns for existing databases
+│   │   ├── phase_admin_portal.sql    # Admin roles, audit logs, moderation, and announcements
+│   │   ├── phase_email_verification.sql # Email verification state and one-time codes
+│   │   └── phase_risk_analysis.sql  # State for High-risk level transitions
 │   ├── src/
 │   │   ├── config/db.ts              # MySQL connection pool
 │   │   ├── models/                   # Database queries per entity
 │   │   ├── controllers/              # Request handlers
 │   │   ├── middleware/               # JWT auth guard
 │   │   ├── services/aiService.ts     # AI quiz generation and grading providers
+│   │   ├── services/riskAnalysis.ts  # Explainable, rule-based risk scoring
+│   │   ├── scripts/seedAdmin.ts      # Bootstrap the first administrator
+│   │   ├── scripts/seedAnalyticsDemo.ts # Seed opt-in analytics demo data
 │   │   ├── sockets/signaling.ts      # WebRTC signaling server
 │   │   ├── routes/                   # auth, students, subjects, performance,
 │   │   │                             # streaks, study-sessions, quizzes
@@ -77,7 +84,7 @@ acadance/
         ├── api/client.ts             # Axios instance (auto-attaches JWT)
         ├── context/AuthContext.tsx
         ├── hooks/useStreak.ts
-        ├── components/               # Sidebar, ProtectedRoute, BarField
+        ├── components/               # Navigation, protected routes, shared UI
         └── pages/                    # Login, Register, Dashboard, Performance,
                                        # Streak, StudySessions, StudyRoom,
                                        # Quizzes, TakeQuiz, Profile
@@ -103,7 +110,31 @@ backend/database/phase_avatar_upload.sql
 ```
 For databases created before AI grading was added, apply
 `backend/database/phase_ai_grading.sql` once instead of recreating the database.
-Fresh databases already get those columns from `schema.sql`.
+For an existing database, apply `backend/database/phase_admin_portal.sql` after
+the other phase migrations (including AI grading). This migration is safe to
+rerun on MariaDB if some admin columns or tables already exist. Fresh databases
+receive the admin tables and columns from `schema.sql`.
+
+For an existing database, also apply
+`backend/database/phase_email_verification.sql` after the admin migration and
+before starting the updated backend. It adds the OTP table and marks existing
+accounts (including the seeded admin) as verified so they can continue to log in.
+For risk analysis, also run `backend/database/phase_risk_analysis.sql` once;
+it creates the state table used to notify students only when their risk level
+transitions to High. Fresh installs include this table in `schema.sql`.
+
+In MySQL Workbench, open `backend/database/phase_risk_analysis.sql`, confirm
+`USE saics_db;` matches the backend database, and execute the full script. It
+is safe to rerun.
+
+#### Run the email verification migration in MySQL Workbench
+1. Start MySQL in XAMPP and connect Workbench to the same host and port used by
+   the backend.
+2. Open `backend/database/phase_email_verification.sql` in Workbench.
+3. Confirm its `USE saics_db;` database matches `DB_NAME` in the backend
+   configuration. If you use another database name, change that statement
+   before executing.
+4. Execute the full script with the lightning-bolt button. It is safe to rerun.
 
 ### 2. Backend
 ```bash
@@ -117,22 +148,55 @@ DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=
 DB_NAME=saics_db
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USER=your_smtp_username
+SMTP_PASS=your_smtp_password
+MAIL_FROM=SAICS <no-reply@example.com>
 JWT_SECRET=replace_with_a_long_random_string
 JWT_EXPIRES_IN=7d
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=choose_a_unique_password_of_at_least_12_characters
 GROQ_API_KEY=
 GEMINI_API_KEY=
 OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=llama3.2
 ```
+Use a long, unique random value for `JWT_SECRET`. Keep `.env` private and do not
+commit it. Keep each environment setting on its own line. For PowerShell, create
+the file with `Copy-Item .env.example .env`.
 The backend tries configured Groq first, then Gemini, then Ollama. A cloud API
 key is not required when Ollama is installed and the selected model is available
 locally.
 Then:
 ```bash
 npm install
+npm run seed:admin
 npm run dev
 ```
-Runs on `http://localhost:5000`.
+The seed command creates the first administrator from `ADMIN_EMAIL` and
+`ADMIN_PASSWORD`; it is safe to rerun and never prints the password. Admins
+cannot register through the public signup form. Keep this terminal open while
+using the application. Check `http://localhost:5000/api/health` for the API
+health response; the backend terminal should also report a successful MySQL
+connection.
+
+To load the clearly labeled, repeatable risk-analysis demo students, stop the
+backend if needed and run `npm run seed:analytics-demo` from `backend`. The
+script creates or refreshes only the `demo.*@example.com` accounts and their
+demo assessment/activity records. It generates an unreported random password
+unless `ANALYTICS_DEMO_PASSWORD` is set before running it. This seed command
+does not run automatically.
+
+Email verification uses the existing `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`,
+`SMTP_PASS`, and `MAIL_FROM` settings in the backend environment file. Gmail
+SMTP on port 465 uses a secure connection; port 587 uses the normal STARTTLS
+flow. Replace the example SMTP values with credentials from your mail provider;
+the sender address must be permitted by that provider. In development only,
+when SMTP is not configured, the backend prints the verification code to its
+terminal for local testing. Configure SMTP for other environments. SMTP
+delivery failures are reported in the backend terminal without logging
+credentials.
 
 ### 3. Frontend
 ```bash
@@ -142,7 +206,19 @@ npm run dev
 ```
 Runs on `http://localhost:5173` (or the next available port).
 
-Open the frontend URL, register an account, and you're in.
+Open the frontend URL and register an account. Enter the six-digit code sent to
+your email to verify the account before logging in. Passwords must be at least
+8 characters and pass the live strength check; strong passwords are encouraged.
+
+### Login troubleshooting
+
+The backend and MySQL must both be running. If login shows a connection error,
+check that `http://localhost:5000/api/health` responds and that the backend
+terminal is still open. On an existing database, a `500` during login may mean
+the admin/audit schema has not been applied; run
+`backend/database/phase_admin_portal.sql` against `saics_db`, then restart the
+backend. A `401 Invalid email or password` means the API is reachable but the
+account credentials were not accepted.
 
 ## Testing
 
@@ -161,6 +237,13 @@ needed. See [TESTING.md](./TESTING.md) for details and manual test checklists.
 |---|---|---|---|
 | POST | `/api/auth/register` | Create a new student account | No |
 | POST | `/api/auth/login` | Log in and receive a JWT | No |
+| POST | `/api/auth/verify-otp` | Verify a new account using its emailed code | No |
+| POST | `/api/auth/resend-otp` | Request another verification code | No |
+| POST | `/api/auth/change-password` | Change password, including required temporary-password change | Yes |
+| GET | `/api/analytics/me` | Get the authenticated student's explainable risk analysis | Yes |
+| GET | `/api/admin/analytics/at-risk` | Paginated risk analysis list (supports `page`, `limit`, `level`, and `subjectId`) | Admin |
+| `/api/admin/*` | Various | Admin dashboard, user and content management, audit, AI/system monitoring, and announcements | Admin |
+| GET | `/api/announcements` | List announcements for authenticated users | Yes |
 | GET | `/api/students/me` | Get the logged-in student's profile | Yes |
 | PUT | `/api/students/me` | Update profile (name, bio, academic year, avatar color) | Yes |
 | POST | `/api/students/me/subjects` | Enroll in a subject | Yes |
@@ -217,7 +300,7 @@ flowchart TD
         Performance[Performance Module]
         Streaks[Streak Module]
         Quiz[Quiz Module]
-        Analytics[Predictive Analytics]
+        Analytics[Risk Analysis]
         Voice[WebRTC Signaling]
     end
 
@@ -229,7 +312,7 @@ flowchart TD
 
     Quiz --> Providers[Groq / Gemini / Ollama]
     Voice --> RTC[Peer-to-peer WebRTC Audio]
-    Analytics -.-> Prediction[Risk Analysis Engine<br/>planned]
+    Analytics --> Prediction[Explainable Rule-Based Risk Analysis]
 ```
 
 ## Request Flow
@@ -330,7 +413,7 @@ graph TD
     AIQuiz --> AIProviders[Groq / Gemini / Ollama]
     Voice --> WebRTC
     Voice --> JoinCodes[Join Codes]
-    Analytics -.-> Prediction[planned]
+    Analytics --> Prediction[Rule-Based Risk Analysis]
 ```
 
 ## Roadmap
@@ -342,7 +425,7 @@ This project follows a phased build, matching the dissertation timeline:
 - [x] **Phase 3a** — Streaks & Gamification
 - [x] **Phase 3b** — Voice-based Study Sessions (WebRTC)
 - [x] **Phase 4** — AI Quiz Generation Module
-- [ ] **Phase 5** — Predictive Analytics (at-risk student identification)
+- [x] **Phase 5** — Rule-based Risk Analysis (explainable at-risk identification)
 
 ### Improvements & To-Do
 - [x] Student profile setup (edit name, bio, academic year, avatar color, and subject enrollment)

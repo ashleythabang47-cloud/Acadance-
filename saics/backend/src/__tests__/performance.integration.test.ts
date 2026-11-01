@@ -5,22 +5,32 @@ import { PerformanceModel } from "../models/performanceModel";
 import { StreakModel } from "../models/streakModel";
 import { NotificationModel } from "../models/notificationModel";
 import { SubjectModel } from "../models/subjectModel";
+import { StudentModel } from "../models/studentModel";
 
 jest.mock("../models/performanceModel");
 jest.mock("../models/streakModel");
 jest.mock("../models/notificationModel");
 jest.mock("../models/subjectModel");
+jest.mock("../models/studentModel");
 
 const mockedPerformanceModel = PerformanceModel as jest.Mocked<typeof PerformanceModel>;
 const mockedStreakModel = StreakModel as jest.Mocked<typeof StreakModel>;
 const mockedNotificationModel = NotificationModel as jest.Mocked<typeof NotificationModel>;
 const mockedSubjectModel = SubjectModel as jest.Mocked<typeof SubjectModel>;
+const mockedStudentModel = StudentModel as jest.Mocked<typeof StudentModel>;
 
-const JWT_SECRET = process.env.JWT_SECRET || "dev_secret_change_me";
+const JWT_SECRET = process.env.JWT_SECRET!;
 const authToken = jwt.sign({ studentId: 1, email: "test@example.com" }, JWT_SECRET);
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockedStudentModel.findAuthState.mockResolvedValue({
+    role: "student",
+    is_suspended: false,
+    deleted_at: null,
+    token_version: 0,
+    force_password_reset: false,
+  });
   mockedStreakModel.recordActivity.mockResolvedValue({
     current_streak: 1,
     longest_streak: 1,
@@ -42,6 +52,16 @@ describe("POST /api/performance", () => {
       assessmentDate: "2026-07-20",
     });
     expect(res.status).toBe(401);
+  });
+
+  it("rejects an invalid auth token before querying account state", async () => {
+    const res = await request(app)
+      .post("/api/performance")
+      .set("Authorization", "Bearer invalid-token")
+      .send({});
+
+    expect(res.status).toBe(401);
+    expect(mockedStudentModel.findAuthState).not.toHaveBeenCalled();
   });
 
   it("rejects a score greater than maxScore", async () => {

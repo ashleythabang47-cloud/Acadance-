@@ -25,11 +25,15 @@ function geminiResponse(content: string): Response {
 const originalFetch = global.fetch;
 const originalGroqKey = process.env.GROQ_API_KEY;
 const originalGeminiKey = process.env.GEMINI_API_KEY;
+const originalGroqModel = process.env.GROQ_MODEL;
+const originalGeminiModel = process.env.GEMINI_MODEL;
 
 beforeEach(() => {
   clearGenerationCache();
   process.env.GROQ_API_KEY = "test-groq-key";
   delete process.env.GEMINI_API_KEY;
+  delete process.env.GROQ_MODEL;
+  delete process.env.GEMINI_MODEL;
 });
 
 afterEach(() => {
@@ -38,6 +42,10 @@ afterEach(() => {
   else process.env.GROQ_API_KEY = originalGroqKey;
   if (originalGeminiKey === undefined) delete process.env.GEMINI_API_KEY;
   else process.env.GEMINI_API_KEY = originalGeminiKey;
+  if (originalGroqModel === undefined) delete process.env.GROQ_MODEL;
+  else process.env.GROQ_MODEL = originalGroqModel;
+  if (originalGeminiModel === undefined) delete process.env.GEMINI_MODEL;
+  else process.env.GEMINI_MODEL = originalGeminiModel;
 });
 
 describe("AI question generation", () => {
@@ -91,9 +99,66 @@ describe("AI question generation", () => {
 
     const requestBody = JSON.parse(
       String((global.fetch as jest.Mock).mock.calls[0][1].body)
-    ) as { response_format: { type: string }; messages: { content: string }[] };
+    ) as {
+      model: string;
+      max_completion_tokens: number;
+      max_tokens?: number;
+      temperature: number;
+      response_format: { type: string };
+      messages: { content: string }[];
+    };
+    expect(requestBody.model).toBe("openai/gpt-oss-20b");
+    expect(requestBody.max_completion_tokens).toBe(3000);
+    expect(requestBody.max_tokens).toBeUndefined();
+    expect(requestBody.temperature).toBe(0.1);
     expect(requestBody.response_format.type).toBe("json_object");
     expect(requestBody.messages[0].content).toContain('"questions"');
+  });
+
+  it("uses the configured Groq model", async () => {
+    process.env.GROQ_MODEL = "openai/gpt-oss-120b";
+    global.fetch = jest.fn().mockResolvedValue(
+      providerResponse(JSON.stringify({
+        questions: [{
+          question: "Where does photosynthesis occur?",
+          options: ["Chloroplast", "Cell wall", "Nucleus", "Ribosome"],
+          correctAnswer: "Chloroplast",
+        }],
+      }))
+    );
+
+    await generateQuestions("photosynthesis", "multiple_choice", 1);
+
+    const body = JSON.parse(String((global.fetch as jest.Mock).mock.calls[0][1].body));
+    expect(body.model).toBe("openai/gpt-oss-120b");
+  });
+
+  it("logs provider HTTP errors without logging secrets or request headers", async () => {
+    const errorResponse = {
+      ok: false,
+      status: 400,
+      json: async () => ({
+        error: { message: "Invalid model test-groq-key. Authorization: Bearer private-token" },
+      }),
+    } as Response;
+    global.fetch = jest.fn().mockResolvedValue(errorResponse);
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => undefined);
+
+    try {
+      await expect(
+        generateQuestions("photosynthesis", "multiple_choice", 1)
+      ).rejects.toThrow("AI grading is temporarily unavailable");
+
+      expect(consoleError).toHaveBeenCalledWith(
+        expect.stringContaining("Groq request failed: provider_http_error: HTTP 400: Invalid model")
+      );
+      const loggedErrors = consoleError.mock.calls.map((call) => call.join(" ")).join(" ");
+      expect(loggedErrors).not.toContain("test-groq-key");
+      expect(loggedErrors).not.toContain("private-token");
+      expect(loggedErrors).not.toContain("Authorization");
+    } finally {
+      consoleError.mockRestore();
+    }
   });
 
   it("generates a long-answer question with a positive-point rubric", async () => {
@@ -190,6 +255,7 @@ describe("long-answer grading", () => {
   it("falls back to Gemini when the Groq key is unset", async () => {
     delete process.env.GROQ_API_KEY;
     process.env.GEMINI_API_KEY = "test-gemini-key";
+    process.env.GEMINI_MODEL = "gemini-2.5-flash";
     const fetchMock = jest.fn().mockResolvedValue(
         geminiResponse(
           JSON.stringify([
@@ -206,6 +272,8 @@ describe("long-answer grading", () => {
     await generateQuestions("chloroplast", "multiple_choice", 1);
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(String(fetchMock.mock.calls[0][0])).toContain("generativelanguage.googleapis.com");
+    expect(String(fetchMock.mock.calls[0][0])).toContain(
+      "generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+    );
   });
 });

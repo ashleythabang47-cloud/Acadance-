@@ -5,6 +5,8 @@ import { AuthRequest } from "../middleware/authMiddleware";
 import { StudentModel } from "../models/studentModel";
 import { SubjectModel } from "../models/subjectModel";
 import { UPLOAD_DIR } from "../config/upload";
+import { validateName } from "../utils/inputValidation";
+import { recordAudit } from "../services/auditLog";
 
 export async function getMyProfile(req: AuthRequest, res: Response) {
   try {
@@ -22,20 +24,26 @@ export async function getMyProfile(req: AuthRequest, res: Response) {
 
 export async function updateMyProfile(req: AuthRequest, res: Response) {
   try {
-    const { fullName, bio, academicYear, avatarColor } = req.body;
+    const { fullName, bio, academicYear, avatarColor } = req.body ?? {};
 
-    if (fullName !== undefined && !fullName.trim()) {
-      return res.status(400).json({ message: "fullName cannot be empty." });
+    let normalizedName: string | undefined;
+    if (fullName !== undefined) {
+      const nameResult = validateName(fullName);
+      if (nameResult.error) return res.status(400).json(nameResult.error);
+      normalizedName = nameResult.value;
     }
     if (bio !== undefined && bio.length > 255) {
-      return res.status(400).json({ message: "bio must be 255 characters or fewer." });
+      return res.status(400).json({ field: "bio", message: "bio must be 255 characters or fewer." });
     }
     if (avatarColor !== undefined && !/^#[0-9A-Fa-f]{6}$/.test(avatarColor)) {
-      return res.status(400).json({ message: "avatarColor must be a valid hex color." });
+      return res.status(400).json({ field: "avatarColor", message: "avatarColor must be a valid hex color." });
     }
 
+    const before = normalizedName !== undefined
+      ? await StudentModel.findById(req.studentId!)
+      : null;
     const updated = await StudentModel.updateProfile(req.studentId!, {
-      fullName,
+      fullName: normalizedName,
       bio,
       academicYear,
       avatarColor,
@@ -43,6 +51,18 @@ export async function updateMyProfile(req: AuthRequest, res: Response) {
 
     if (!updated) {
       return res.status(400).json({ message: "No valid fields to update." });
+    }
+
+    if (normalizedName !== undefined && before?.full_name !== normalizedName) {
+      await recordAudit({
+        actorId: req.studentId,
+        targetType: "user",
+        targetId: req.studentId,
+        action: "user.profile.name.update",
+        before: { full_name: before?.full_name },
+        after: { full_name: normalizedName },
+        ipAddress: req.ip,
+      });
     }
 
     const student = await StudentModel.findById(req.studentId!);

@@ -80,6 +80,9 @@ export async function updatePerformanceRecord(req: AuthRequest, res: Response) {
     if (!existing) {
       return res.status(404).json({ message: "Record not found." });
     }
+    if (existing.source === "quiz") {
+      return res.status(409).json({ message: "Quiz performance records are read-only; update the quiz attempt instead." });
+    }
 
     const { subjectId, assessmentName, score, maxScore, assessmentDate } = req.body;
 
@@ -109,6 +112,13 @@ export async function updatePerformanceRecord(req: AuthRequest, res: Response) {
 export async function deletePerformanceRecord(req: AuthRequest, res: Response) {
   try {
     const recordId = Number(req.params.id);
+    const existing = await PerformanceModel.findOne(recordId, req.studentId!);
+    if (!existing) {
+      return res.status(404).json({ message: "Record not found." });
+    }
+    if (existing.source === "quiz") {
+      return res.status(409).json({ message: "Quiz performance records are read-only and cannot be deleted." });
+    }
     const deleted = await PerformanceModel.delete(recordId, req.studentId!);
     if (!deleted) {
       return res.status(404).json({ message: "Record not found." });

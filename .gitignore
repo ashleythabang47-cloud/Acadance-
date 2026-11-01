@@ -1,1 +1,8 @@
 saics/backend/.env
+
+node_modules/
+dist/
+.env
+.env.local
+backups/
+saics_db_*.sql

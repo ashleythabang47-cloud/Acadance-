@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { LogIn } from "lucide-react";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
@@ -13,6 +13,7 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
 
   async function handleSubmit(e: FormEvent) {
@@ -21,9 +22,19 @@ export default function Login() {
     setLoading(true);
     try {
       const res = await api.post("/auth/login", { email, password });
-      login(res.data.student, res.data.token);
-      navigate("/dashboard");
+      const account = res.data.student ?? res.data.user;
+      const role = res.data.role === "admin" || account?.role === "admin" ? "admin" : "student";
+      const forcePasswordReset =
+        res.data.force_password_reset === true ||
+        account?.force_password_reset === true ||
+        account?.forcePasswordReset === true;
+      login(account, res.data.token, role, forcePasswordReset);
+      navigate(role === "admin" ? "/admin" : "/dashboard");
     } catch (err: any) {
+      if (err.response?.data?.code === "EMAIL_NOT_VERIFIED") {
+        navigate(`/verify-email?email=${encodeURIComponent(email.trim().toLowerCase())}`);
+        return;
+      }
       setError(err.response?.data?.message || "Login failed. Please try again.");
     } finally {
       setLoading(false);
@@ -50,6 +61,7 @@ export default function Login() {
           <h1>Welcome back</h1>
           <p className="subtitle">Log in to your academic dashboard</p>
 
+          {location.state?.message && <div className="verification-notice" role="status">{location.state.message}</div>}
           {error && <div className="error-banner">{error}</div>}
 
           <label htmlFor="login-email">Email</label>

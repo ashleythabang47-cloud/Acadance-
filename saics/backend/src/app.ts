@@ -9,6 +9,10 @@ import streakRoutes from "./routes/streakRoutes";
 import studySessionRoutes from "./routes/studySessionRoutes";
 import quizRoutes from "./routes/quizRoutes";
 import notificationRoutes from "./routes/notificationRoutes";
+import adminRoutes from "./routes/adminRoutes";
+import analyticsRoutes from "./routes/analyticsRoutes";
+import { listAnnouncements } from "./controllers/adminController";
+import { requireAuth } from "./middleware/authMiddleware";
 
 const app = express();
 
@@ -24,6 +28,7 @@ app.get("/api/health", (_req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/analytics", analyticsRoutes);
 app.use("/api/students", studentRoutes);
 app.use("/api/subjects", subjectRoutes);
 app.use("/api/performance", performanceRoutes);
@@ -31,5 +36,7 @@ app.use("/api/streaks", streakRoutes);
 app.use("/api/study-sessions", studySessionRoutes);
 app.use("/api/quizzes", quizRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.get("/api/announcements", requireAuth, listAnnouncements);
+app.use("/api/admin", adminRoutes);
 
 export default app;

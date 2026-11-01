@@ -1,15 +1,43 @@
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { LineChart, BookOpenCheck, Mic, Flame } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import AppLayout from "../components/AppLayout";
 import Spinner from "../components/Spinner";
+import { api } from "../api/client";
 import { useStreak } from "../hooks/useStreak";
 import { handleKeyActivation } from "../utils/a11y";
+
+interface RiskAnalysis {
+  level: "insufficient_data" | "low" | "medium" | "high";
+  score?: number;
+  reasons?: string[];
+  suggestions?: string[];
+}
 
 export default function Dashboard() {
   const { student } = useAuth();
   const navigate = useNavigate();
   const { data: streakData, loading: streakLoading } = useStreak(true);
+  const [risk, setRisk] = useState<RiskAnalysis | null>(null);
+  const [riskLoading, setRiskLoading] = useState(true);
+  const [riskError, setRiskError] = useState("");
+
+  const loadRisk = useCallback(async () => {
+    setRiskLoading(true);
+    setRiskError("");
+    try {
+      const response = await api.get("/analytics/me");
+      setRisk(response.data.analysis as RiskAnalysis);
+    } catch (error) {
+      const requestError = error as { response?: { data?: { message?: string } } };
+      setRiskError(requestError.response?.data?.message ?? "Could not load your academic outlook.");
+    } finally {
+      setRiskLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { void loadRisk(); }, [loadRisk]);
 
   // Scale each day's raw activity count into a bar height percentage.
   // Capped so a handful of actions in one day still reads as "full".
@@ -26,6 +54,35 @@ export default function Dashboard() {
           <h1>Hi, {student?.fullName?.split(" ")[0]} 👋</h1>
         </div>
       </header>
+
+      <section className="risk-outlook-card" aria-labelledby="risk-outlook-title">
+        <div className="risk-outlook-heading">
+          <div>
+            <p className="greeting-eyebrow">Risk analysis</p>
+            <h2 id="risk-outlook-title">Academic Outlook</h2>
+          </div>
+          {!riskLoading && !riskError && risk && (
+            <span className={`risk-level-badge risk-level-${risk.level}`}>
+              {risk.level === "insufficient_data" ? "Not enough data" : risk.level}
+            </span>
+          )}
+        </div>
+        {riskLoading ? <Spinner label="Loading academic outlook..." /> : riskError ? (
+          <div className="risk-outlook-message" role="alert">
+            <p>{riskError}</p><button className="secondary-btn" onClick={() => void loadRisk()}>Try again</button>
+          </div>
+        ) : risk?.level === "insufficient_data" ? (
+          <p className="risk-outlook-message">Log at least three assessment results to see your explainable risk analysis.</p>
+        ) : risk ? (
+          <>
+            <p className="risk-outlook-score"><strong>{risk.score}</strong><span> / 100 risk score</span></p>
+            <div className="risk-outlook-columns">
+              <div><h3>What we noticed</h3><ul>{risk.reasons?.map((reason) => <li key={reason}>{reason}</li>)}</ul></div>
+              <div><h3>Suggested next steps</h3><ul>{risk.suggestions?.map((suggestion) => <li key={suggestion}>{suggestion}</li>)}</ul></div>
+            </div>
+          </>
+        ) : <p className="risk-outlook-message">Risk analysis is not available yet.</p>}
+      </section>
 
       <div className="card-grid">
         <div

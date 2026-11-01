@@ -1,8 +1,7 @@
 import { Server as HttpServer } from "http";
 import { Server, Socket } from "socket.io";
-import jwt from "jsonwebtoken";
-
-const JWT_SECRET = process.env.JWT_SECRET || "dev_secret_change_me";
+import { StudentModel } from "../models/studentModel";
+import { verifyAuthToken } from "../utils/authToken";
 
 interface PeerInfo {
   socketId: string;
@@ -24,19 +23,32 @@ export function attachSignaling(httpServer: HttpServer) {
   io.use((socket, next) => {
     const token = socket.handshake.auth?.token;
     if (!token) return next(new Error("No auth token provided."));
-    try {
-      const decoded = jwt.verify(token, JWT_SECRET) as { studentId: number };
-      (socket as any).studentId = decoded.studentId;
-      next();
-    } catch {
-      next(new Error("Invalid or expired token."));
-    }
+    void (async () => {
+      try {
+        const decoded = verifyAuthToken(token);
+        const authState = await StudentModel.findAuthState(decoded.studentId);
+        if (
+          !authState ||
+          authState.is_suspended ||
+          authState.deleted_at ||
+          Number(authState.token_version) !== Number(decoded.tokenVersion || 0)
+        ) {
+          return next(new Error("Invalid or expired token."));
+        }
+        socket.data.studentId = decoded.studentId;
+        socket.data.tokenVersion = Number(decoded.tokenVersion || 0);
+        next();
+      } catch {
+        next(new Error("Invalid or expired token."));
+      }
+    })();
   });
 
   io.on("connection", (socket: Socket) => {
-    const studentId = (socket as any).studentId as number;
+    const studentId = socket.data.studentId as number;
 
-    socket.on("join-room", ({ sessionId, fullName }: { sessionId: string; fullName: string }) => {
+    socket.on("join-room", async ({ sessionId, fullName }: { sessionId: string; fullName: string }) => {
+      if (!(await isSocketAuthorized(socket))) return;
       const room = `session-${sessionId}`;
       socket.join(room);
 
@@ -50,11 +62,12 @@ export function attachSignaling(httpServer: HttpServer) {
       rooms.set(room, [...existing, me]);
 
       socket.to(room).emit("peer-joined", me);
-      (socket as any).currentRoom = room;
+      socket.data.currentRoom = room;
     });
 
     // Relays an SDP offer/answer or ICE candidate to one specific peer.
-    socket.on("signal", ({ to, data }: { to: string; data: unknown }) => {
+    socket.on("signal", async ({ to, data }: { to: string; data: unknown }) => {
+      if (!(await isSocketAuthorized(socket))) return;
       io.to(to).emit("signal", { from: socket.id, data });
     });
 
@@ -63,7 +76,7 @@ export function attachSignaling(httpServer: HttpServer) {
   });
 
   function handleLeave(socket: Socket) {
-    const room = (socket as any).currentRoom as string | undefined;
+    const room = socket.data.currentRoom as string | undefined;
     if (!room) return;
 
     const peers = rooms.get(room) || [];
@@ -74,6 +87,26 @@ export function attachSignaling(httpServer: HttpServer) {
 
     socket.to(room).emit("peer-left", { socketId: socket.id });
     socket.leave(room);
+  }
+
+  async function isSocketAuthorized(socket: Socket): Promise<boolean> {
+    try {
+      const studentId = socket.data.studentId as number;
+      const current = await StudentModel.findAuthState(studentId);
+      if (
+        !current ||
+        current.is_suspended ||
+        current.deleted_at ||
+        Number(current.token_version) !== Number(socket.data.tokenVersion)
+      ) {
+        socket.disconnect(true);
+        return false;
+      }
+      return true;
+    } catch {
+      socket.disconnect(true);
+      return false;
+    }
   }
 
   return io;

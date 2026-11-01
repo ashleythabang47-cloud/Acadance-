@@ -9,6 +9,7 @@ import Spinner from "./components/Spinner";
 // no sockets), so there's nothing to gain by splitting them out.
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import VerifyEmail from "./pages/VerifyEmail";
 import "./index.css";
 
 // Everything past the login wall is lazy-loaded. These pages pull in
@@ -23,6 +24,8 @@ const StudyRoom = lazy(() => import("./pages/StudyRoom"));
 const Quizzes = lazy(() => import("./pages/Quizzes"));
 const TakeQuiz = lazy(() => import("./pages/TakeQuiz"));
 const Profile = lazy(() => import("./pages/Profile"));
+const AdminPortal = lazy(() => import("./pages/AdminPortal"));
+const ChangePassword = lazy(() => import("./pages/ChangePassword"));
 
 function PageFallback() {
   return (
@@ -42,6 +45,23 @@ function App() {
               <Route path="/" element={<Navigate to="/login" replace />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/verify-email" element={<VerifyEmail />} />
+              <Route
+                path="/change-password"
+                element={
+                  <ProtectedRoute allowPasswordChange>
+                    <ChangePassword />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/*"
+                element={
+                  <ProtectedRoute requireAdmin>
+                    <AdminPortal />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/dashboard"
                 element={

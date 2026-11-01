@@ -10,6 +10,8 @@ export interface PerformanceRecord {
   score: number;
   max_score: number;
   assessment_date: string;
+  source: "manual" | "quiz";
+  quiz_attempt_id: number | null;
   created_at?: string;
 }
 
@@ -59,6 +61,56 @@ export const PerformanceModel = {
     return result.insertId;
   },
 
+  async syncCompletedQuizAttempt(attemptId: number): Promise<void> {
+    const [attempts] = await pool.query<RowDataPacket[]>(
+      `SELECT qa.student_id, qa.score, qa.max_score, DATE(qa.completed_at) AS assessment_date,
+              q.title, q.subject_id
+       FROM quiz_attempts qa
+       JOIN quizzes q ON q.quiz_id = qa.quiz_id
+       WHERE qa.attempt_id = ? AND qa.grading_status = 'completed'
+         AND qa.score IS NOT NULL AND qa.max_score > 0`,
+      [attemptId]
+    );
+    if (!attempts.length) return;
+
+    let subjectId = attempts[0].subject_id == null ? null : Number(attempts[0].subject_id);
+    if (subjectId === null) {
+      await pool.query(
+        `INSERT IGNORE INTO subjects (subject_name, subject_code) VALUES ('General', 'GENERAL')`
+      );
+      const [generalSubjects] = await pool.query<RowDataPacket[]>(
+        `SELECT subject_id FROM subjects WHERE subject_code = 'GENERAL' LIMIT 1`
+      );
+      subjectId = Number(generalSubjects[0]?.subject_id);
+      if (!Number.isInteger(subjectId) || subjectId < 1) {
+        throw new Error("Could not resolve the General subject for a quiz attempt.");
+      }
+    }
+
+    const attempt = attempts[0];
+    await pool.query(
+      `INSERT INTO performance_records
+        (student_id, subject_id, assessment_name, score, max_score, assessment_date, source, quiz_attempt_id)
+       VALUES (?, ?, ?, ?, ?, COALESCE(?, CURRENT_DATE), 'quiz', ?)
+       ON DUPLICATE KEY UPDATE
+         subject_id = VALUES(subject_id),
+         assessment_name = VALUES(assessment_name),
+         score = VALUES(score),
+         max_score = VALUES(max_score),
+         assessment_date = VALUES(assessment_date),
+         source = 'quiz'`,
+      [
+        Number(attempt.student_id),
+        subjectId,
+        `Quiz: ${String(attempt.title).slice(0, 144)}`,
+        Number(attempt.score),
+        Number(attempt.max_score),
+        attempt.assessment_date,
+        attemptId,
+      ]
+    );
+  },
+
   async update(
     recordId: number,
     studentId: number,
@@ -100,7 +152,7 @@ export const PerformanceModel = {
 
     const [result] = await pool.query<ResultSetHeader>(
       `UPDATE performance_records SET ${fields.join(", ")}
-       WHERE record_id = ? AND student_id = ?`,
+       WHERE record_id = ? AND student_id = ? AND source = 'manual'`,
       values
     );
     return result.affectedRows > 0;
@@ -108,7 +160,7 @@ export const PerformanceModel = {
 
   async delete(recordId: number, studentId: number): Promise<boolean> {
     const [result] = await pool.query<ResultSetHeader>(
-      `DELETE FROM performance_records WHERE record_id = ? AND student_id = ?`,
+      `DELETE FROM performance_records WHERE record_id = ? AND student_id = ? AND source = 'manual'`,
       [recordId, studentId]
     );
     return result.affectedRows > 0;

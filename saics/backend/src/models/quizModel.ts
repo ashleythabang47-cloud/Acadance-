@@ -70,9 +70,11 @@ export const QuizModel = {
   async listAll(): Promise<Quiz[]> {
     const [rows] = await pool.query<RowDataPacket[]>(
       `SELECT q.*, s.subject_name,
-              (SELECT COUNT(*) FROM quiz_questions qq WHERE qq.quiz_id = q.quiz_id) AS question_count
+              (SELECT COUNT(*) FROM quiz_questions qq
+               WHERE qq.quiz_id = q.quiz_id AND qq.deleted_at IS NULL AND qq.is_hidden = FALSE) AS question_count
        FROM quizzes q
        JOIN subjects s ON s.subject_id = q.subject_id
+       WHERE q.deleted_at IS NULL AND q.is_hidden = FALSE
        ORDER BY q.created_at DESC`
     );
     return rows as Quiz[];
@@ -82,7 +84,7 @@ export const QuizModel = {
     const [rows] = await pool.query<RowDataPacket[]>(
       `SELECT q.*, s.subject_name FROM quizzes q
        JOIN subjects s ON s.subject_id = q.subject_id
-       WHERE q.quiz_id = ? LIMIT 1`,
+       WHERE q.quiz_id = ? AND q.deleted_at IS NULL AND q.is_hidden = FALSE LIMIT 1`,
       [quizId]
     );
     return (rows[0] as Quiz) || null;
@@ -94,7 +96,7 @@ export const QuizModel = {
   ): Promise<Omit<QuizQuestion, "correct_answer">[]> {
     const [rows] = await pool.query<RowDataPacket[]>(
       `SELECT question_id, quiz_id, question_text, question_type, option_a, option_b, option_c, option_d
-       FROM quiz_questions WHERE quiz_id = ?`,
+       FROM quiz_questions WHERE quiz_id = ? AND deleted_at IS NULL AND is_hidden = FALSE`,
       [quizId]
     );
     return rows as Omit<QuizQuestion, "correct_answer">[];
@@ -102,7 +104,7 @@ export const QuizModel = {
 
   async getQuestionsWithAnswers(quizId: number): Promise<QuizQuestion[]> {
     const [rows] = await pool.query<RowDataPacket[]>(
-      `SELECT * FROM quiz_questions WHERE quiz_id = ?`,
+      `SELECT * FROM quiz_questions WHERE quiz_id = ? AND deleted_at IS NULL AND is_hidden = FALSE`,
       [quizId]
     );
     return rows as QuizQuestion[];

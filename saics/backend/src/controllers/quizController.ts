@@ -15,6 +15,8 @@ import {
   RubricCriterion,
 } from "../services/grader";
 import { NotificationModel } from "../models/notificationModel";
+import { recordAudit } from "../services/auditLog";
+import { PerformanceModel } from "../models/performanceModel";
 
 const LOW_QUIZ_SCORE_THRESHOLD = 50;
 
@@ -54,6 +56,14 @@ export async function generateQuiz(req: AuthRequest, res: Response) {
       req.studentId!,
       questions
     );
+    await recordAudit({
+      actorId: req.studentId,
+      targetType: "quiz",
+      targetId: quizId,
+      action: "quiz.create",
+      after: { title, subjectId: Number(subjectId), difficulty: validDifficulty, questionCount: questions.length },
+      ipAddress: req.ip,
+    });
 
     await StreakModel.recordActivity(req.studentId!);
 
@@ -214,6 +224,25 @@ export async function submitQuizAttempt(req: AuthRequest, res: Response) {
       maxScoreTotal,
       pendingGrading ? "pending" : "completed"
     );
+    await recordAudit({
+      actorId: req.studentId,
+      targetType: "quiz_attempt",
+      targetId: attemptId,
+      action: "quiz.attempt.submit",
+      after: {
+        quizId,
+        score: pendingGrading ? null : scoreTotal,
+        maxScore: maxScoreTotal,
+        gradingStatus: pendingGrading ? "pending" : "completed",
+        answers: results.map(({ questionId, score, maxScore, gradingStatus }) => ({
+          questionId,
+          score,
+          maxScore,
+          gradingStatus,
+        })),
+      },
+      ipAddress: req.ip,
+    });
     await StreakModel.recordActivity(req.studentId!);
 
     const percentage = maxScoreTotal > 0 ? (scoreTotal / maxScoreTotal) * 100 : 0;
@@ -224,6 +253,17 @@ export async function submitQuizAttempt(req: AuthRequest, res: Response) {
         `You scored ${Math.round(percentage)}% on "${quiz?.title || "a recent quiz"}" — want to try another quiz on the same material to reinforce it?`,
         "suggestion"
       );
+    }
+
+    if (!pendingGrading) {
+      try {
+        await PerformanceModel.syncCompletedQuizAttempt(attemptId);
+      } catch (err) {
+        console.error("Quiz was graded, but its performance record could not be synchronized.", err);
+        return res.status(500).json({
+          message: "Quiz was graded, but its performance record could not be synchronized.",
+        });
+      }
     }
 
     return res.status(pendingGrading ? 202 : 200).json({

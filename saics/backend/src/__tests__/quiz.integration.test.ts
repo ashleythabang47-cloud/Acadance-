@@ -6,22 +6,40 @@ import { StreakModel } from "../models/streakModel";
 import { NotificationModel } from "../models/notificationModel";
 import * as aiService from "../services/aiService";
 import { ProviderChainError } from "../services/grader";
+import { StudentModel } from "../models/studentModel";
+import { recordAudit } from "../services/auditLog";
+import { PerformanceModel } from "../models/performanceModel";
 
 jest.mock("../models/quizModel");
+jest.mock("../models/performanceModel");
 jest.mock("../models/streakModel");
 jest.mock("../models/notificationModel");
 jest.mock("../services/aiService");
+jest.mock("../models/studentModel");
+jest.mock("../services/auditLog");
 
 const mockedQuizModel = QuizModel as jest.Mocked<typeof QuizModel>;
+const mockedPerformanceModel = PerformanceModel as jest.Mocked<typeof PerformanceModel>;
 const mockedStreakModel = StreakModel as jest.Mocked<typeof StreakModel>;
 const mockedNotificationModel = NotificationModel as jest.Mocked<typeof NotificationModel>;
 const mockedAiService = aiService as jest.Mocked<typeof aiService>;
+const mockedStudentModel = StudentModel as jest.Mocked<typeof StudentModel>;
+const mockedRecordAudit = recordAudit as jest.MockedFunction<typeof recordAudit>;
 
-const JWT_SECRET = process.env.JWT_SECRET || "dev_secret_change_me";
+const JWT_SECRET = process.env.JWT_SECRET!;
 const authToken = jwt.sign({ studentId: 1, email: "test@example.com" }, JWT_SECRET);
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockedRecordAudit.mockResolvedValue(undefined);
+  mockedPerformanceModel.syncCompletedQuizAttempt.mockResolvedValue(undefined);
+  mockedStudentModel.findAuthState.mockResolvedValue({
+    role: "student",
+    is_suspended: false,
+    deleted_at: null,
+    token_version: 0,
+    force_password_reset: false,
+  });
   mockedStreakModel.recordActivity.mockResolvedValue({
     current_streak: 1,
     longest_streak: 1,
@@ -204,6 +222,32 @@ describe("POST /api/quizzes/:id/submit", () => {
       2,
       "pending"
     );
+    expect(mockedPerformanceModel.syncCompletedQuizAttempt).not.toHaveBeenCalled();
+  });
+
+  it("creates a quiz performance record after completed grading while recording activity", async () => {
+    mockedQuizModel.getQuestionsWithAnswers.mockResolvedValue([{
+      question_id: 30,
+      quiz_id: 55,
+      question_text: "2+2?",
+      question_type: "multiple_choice",
+      correct_answer: "B",
+      option_a: "3",
+      option_b: "4",
+      option_c: "5",
+      option_d: "6",
+    }]);
+    mockedQuizModel.createAttempt.mockResolvedValue(305);
+
+    await request(app)
+      .post("/api/quizzes/55/submit")
+      .set("Authorization", `Bearer ${authToken}`)
+      .send({ answers: [{ questionId: 30, studentAnswer: "B" }] })
+      .expect(200);
+
+    expect(mockedPerformanceModel.syncCompletedQuizAttempt).toHaveBeenCalledTimes(1);
+    expect(mockedPerformanceModel.syncCompletedQuizAttempt).toHaveBeenCalledWith(305);
+    expect(mockedStreakModel.recordActivity).toHaveBeenCalledWith(1);
   });
 
   it("does NOT create a notification for a passing quiz score", async () => {

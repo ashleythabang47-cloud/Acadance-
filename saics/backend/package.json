@@ -7,7 +7,10 @@
     "dev": "nodemon --exec ts-node src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "test": "jest"
+    "test": "jest",
+    "seed:admin": "ts-node src/scripts/seedAdmin.ts",
+    "seed:analytics-demo": "ts-node src/scripts/seedAnalyticsDemo.ts",
+    "backfill:quiz-performance": "ts-node src/scripts/backfillQuizPerformance.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.112.5",
@@ -18,6 +21,8 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.2.0",
     "mysql2": "^3.11.0",
+    "nodemailer": "^10.3.0",
+    "pdfkit": "^0.20.2",
     "socket.io": "^4.8.3"
   },
   "devDependencies": {
@@ -28,6 +33,8 @@
     "@types/jsonwebtoken": "^9.0.6",
     "@types/multer": "^2.2.0",
     "@types/node": "^20.14.9",
+    "@types/nodemailer": "^8.0.2",
+    "@types/pdfkit": "^0.17.7",
     "@types/supertest": "^7.2.1",
     "jest": "^30.4.2",
     "nodemon": "^3.1.4",

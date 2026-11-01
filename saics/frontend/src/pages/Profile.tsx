@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import AppLayout from "../components/AppLayout";
 import Spinner from "../components/Spinner";
 import { handleKeyActivation } from "../utils/a11y";
+import { validateName } from "../utils/inputValidation";
 
 interface Subject {
   subject_id: number;
@@ -20,6 +21,9 @@ interface StudentProfile {
   academic_year: string | null;
   avatar_color: string;
   avatar_url: string | null;
+  role?: "student" | "admin";
+  force_password_reset?: boolean;
+  forcePasswordReset?: boolean;
 }
 
 const AVATAR_COLORS = ["#4f46e5", "#d97706", "#dc2626", "#2563eb", "#9333ea"];
@@ -37,6 +41,8 @@ export default function Profile() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
+  const [nameTouched, setNameTouched] = useState(false);
+  const [serverNameError, setServerNameError] = useState("");
 
   const [fullName, setFullName] = useState("");
   const [bio, setBio] = useState("");
@@ -46,6 +52,8 @@ export default function Profile() {
 
   const [uploading, setUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+  const nameResult = validateName(fullName);
+  const nameError = (nameTouched || serverNameError) && nameResult.error ? nameResult.error.message : serverNameError;
 
   async function loadData() {
     setLoading(true);
@@ -54,7 +62,13 @@ export default function Profile() {
         api.get("/students/me"),
         api.get("/subjects"),
       ]);
-      const p: StudentProfile = profileRes.data.student;
+      const p: StudentProfile = profileRes.data.student ?? profileRes.data.user ?? profileRes.data;
+      const payloadRole = profileRes.data.role ?? p.role;
+      const forceReset = profileRes.data.force_password_reset ?? profileRes.data.forcePasswordReset ?? p.force_password_reset ?? p.forcePasswordReset;
+      updateStudentInfo({
+        ...(payloadRole === "admin" || payloadRole === "student" ? { role: payloadRole } : {}),
+        ...(typeof forceReset === "boolean" ? { forcePasswordReset: forceReset } : {}),
+      });
       setProfile(p);
       setFullName(p.full_name);
       setBio(p.bio || "");
@@ -79,20 +93,25 @@ export default function Profile() {
 
   async function handleSave(e: FormEvent) {
     e.preventDefault();
+    setNameTouched(true);
+    setServerNameError("");
+    if (nameResult.error) return;
     setError("");
     setSaved(false);
     setSaving(true);
     try {
       await api.put("/students/me", {
-        fullName,
+        fullName: nameResult.value,
         bio,
         academicYear,
         avatarColor,
       });
-      updateStudentInfo({ fullName, avatarColor });
+      setFullName(nameResult.value);
+      updateStudentInfo({ fullName: nameResult.value, avatarColor });
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch (err: any) {
+      if (err.response?.data?.field === "fullName") setServerNameError(err.response.data.message);
       setError(err.response?.data?.message || "Could not save your profile.");
     } finally {
       setSaving(false);
@@ -285,9 +304,12 @@ export default function Profile() {
                         id="profile-name"
                         type="text"
                         value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
+                        onChange={(e) => { setFullName(e.target.value); setNameTouched(true); setServerNameError(""); }}
                         required
+                        aria-invalid={Boolean(nameError)}
+                        aria-describedby={nameError ? "profile-name-error" : undefined}
                       />
+                      {nameError && <p id="profile-name-error" className="field-error" role="alert">{nameError}</p>}
                     </div>
                     <div>
                       <label htmlFor="profile-year">Academic year</label>

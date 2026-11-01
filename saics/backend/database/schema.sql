@@ -13,11 +13,31 @@ USE saics_db;
 CREATE TABLE students (
     student_id      INT AUTO_INCREMENT PRIMARY KEY,
     full_name       VARCHAR(150) NOT NULL,
-    email           VARCHAR(150) NOT NULL UNIQUE,
+    email           VARCHAR(254) NOT NULL UNIQUE,
     password_hash   VARCHAR(255) NOT NULL,
     role            ENUM('student', 'admin') DEFAULT 'student',
+    email_verified  BOOLEAN NOT NULL DEFAULT TRUE,
+    is_suspended    BOOLEAN NOT NULL DEFAULT FALSE,
+    deleted_at      TIMESTAMP NULL,
+    token_version   INT NOT NULL DEFAULT 0,
+    force_password_reset BOOLEAN NOT NULL DEFAULT FALSE,
+    failed_login_attempts INT NOT NULL DEFAULT 0,
+    lockout_until   TIMESTAMP NULL,
+    last_login_at   TIMESTAMP NULL,
     created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE email_otps (
+    student_id      INT NOT NULL PRIMARY KEY,
+    otp_hash        CHAR(64) NOT NULL,
+    expires_at      TIMESTAMP NOT NULL,
+    attempts        TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_email_otps_student
+        FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE CASCADE,
+    INDEX idx_email_otps_expiry (expires_at),
+    INDEX idx_email_otps_created (created_at)
 );
 
 -- ------------------------------------------------------------
@@ -61,6 +81,8 @@ CREATE TABLE quizzes (
     subject_id      INT NOT NULL,
     title           VARCHAR(150) NOT NULL,
     difficulty      ENUM('easy', 'medium', 'hard') DEFAULT 'medium',
+    is_hidden       BOOLEAN NOT NULL DEFAULT FALSE,
+    deleted_at      TIMESTAMP NULL,
     created_by      INT,                          -- student_id or admin who generated it
     created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (subject_id) REFERENCES subjects(subject_id) ON DELETE CASCADE,
@@ -75,6 +97,8 @@ CREATE TABLE quiz_questions (
     correct_answer  TEXT,                         -- reference answer for auto-marking
     model_answer    TEXT,
     rubric          JSON,
+    is_hidden       BOOLEAN NOT NULL DEFAULT FALSE,
+    deleted_at      TIMESTAMP NULL,
     option_a        VARCHAR(255),
     option_b        VARCHAR(255),
     option_c        VARCHAR(255),
@@ -161,6 +185,14 @@ CREATE TABLE predictions (
     FOREIGN KEY (subject_id) REFERENCES subjects(subject_id) ON DELETE CASCADE
 );
 
+CREATE TABLE risk_analysis_state (
+    student_id      INT NOT NULL PRIMARY KEY,
+    level           ENUM('insufficient_data', 'low', 'medium', 'high') NOT NULL,
+    updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE CASCADE,
+    INDEX idx_risk_analysis_level (level, updated_at)
+);
+
 -- ------------------------------------------------------------
 -- 8. NOTIFICATIONS
 -- ------------------------------------------------------------
@@ -173,6 +205,70 @@ CREATE TABLE notifications (
     created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE CASCADE
 );
+
+CREATE TABLE audit_logs (
+    audit_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    actor_id INT NULL,
+    target_type VARCHAR(64) NOT NULL,
+    target_id VARCHAR(128) NULL,
+    action VARCHAR(100) NOT NULL,
+    before_values JSON NULL,
+    after_values JSON NULL,
+    ip_address VARCHAR(45) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_audit_created (created_at),
+    INDEX idx_audit_actor (actor_id, created_at),
+    INDEX idx_audit_action (action, created_at)
+);
+
+CREATE TABLE ai_provider_events (
+    event_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    provider ENUM('groq', 'gemini', 'ollama') NOT NULL,
+    operation ENUM('generation', 'grading') NOT NULL,
+    succeeded BOOLEAN NOT NULL,
+    rate_limited BOOLEAN NOT NULL DEFAULT FALSE,
+    error_message VARCHAR(500) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_ai_events_created (created_at),
+    INDEX idx_ai_events_provider (provider, operation, created_at)
+);
+
+CREATE TABLE content_flags (
+    flag_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    reporter_id INT NULL,
+    quiz_id INT NULL,
+    question_id INT NULL,
+    reason VARCHAR(1000) NOT NULL,
+    status ENUM('open', 'resolved') NOT NULL DEFAULT 'open',
+    resolved_by INT NULL,
+    resolved_at TIMESTAMP NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_flags_status_created (status, created_at),
+    CONSTRAINT fk_flag_reporter FOREIGN KEY (reporter_id) REFERENCES students(student_id) ON DELETE SET NULL,
+    CONSTRAINT fk_flag_quiz FOREIGN KEY (quiz_id) REFERENCES quizzes(quiz_id) ON DELETE SET NULL,
+    CONSTRAINT fk_flag_question FOREIGN KEY (question_id) REFERENCES quiz_questions(question_id) ON DELETE SET NULL,
+    CONSTRAINT fk_flag_resolver FOREIGN KEY (resolved_by) REFERENCES students(student_id) ON DELETE SET NULL
+);
+
+CREATE TABLE announcements (
+    announcement_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    admin_id INT NULL,
+    message VARCHAR(1000) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_announcements_created (created_at),
+    CONSTRAINT fk_announcement_admin FOREIGN KEY (admin_id) REFERENCES students(student_id) ON DELETE SET NULL
+);
+
+DELIMITER //
+CREATE TRIGGER audit_logs_no_update BEFORE UPDATE ON audit_logs
+FOR EACH ROW BEGIN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Audit logs are append-only';
+END//
+CREATE TRIGGER audit_logs_no_delete BEFORE DELETE ON audit_logs
+FOR EACH ROW BEGIN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Audit logs are append-only';
+END//
+DELIMITER ;
 
 -- ------------------------------------------------------------
 -- Helpful indexes

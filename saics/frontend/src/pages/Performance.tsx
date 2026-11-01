@@ -7,6 +7,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  Legend,
   ResponsiveContainer,
 } from "recharts";
 import { Plus, Trash2, ClipboardList } from "lucide-react";
@@ -29,6 +30,7 @@ interface PerformanceRecord {
   score: number;
   max_score: number;
   assessment_date: string;
+  source?: "manual" | "quiz";
 }
 
 export default function Performance() {
@@ -36,6 +38,7 @@ export default function Performance() {
   const [records, setRecords] = useState<PerformanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [recordFilter, setRecordFilter] = useState<"all" | "tests" | "quizzes">("all");
 
   // Form state
   const [subjectId, setSubjectId] = useState("");
@@ -102,13 +105,22 @@ export default function Performance() {
 
   // Chart data: sorted chronologically, percentage-based so subjects with
   // different max scores are comparable on one axis.
-  const chartData = [...records]
+  const filteredRecords = records.filter((record) =>
+    recordFilter === "all" ||
+    (recordFilter === "quizzes" ? record.source === "quiz" : record.source !== "quiz")
+  );
+  const chartData = [...filteredRecords]
     .sort((a, b) => a.assessment_date.localeCompare(b.assessment_date))
-    .map((r) => ({
+    .map((r) => {
+      const isQuiz = r.source === "quiz";
+      const percentage = Math.round((r.score / r.max_score) * 100);
+      return ({
       date: r.assessment_date,
-      percentage: Math.round((r.score / r.max_score) * 100),
+      testPercentage: isQuiz ? null : percentage,
+      quizPercentage: isQuiz ? percentage : null,
       label: `${r.subject_name} — ${r.assessment_name}`,
-    }));
+      });
+    });
 
   return (
     <AppLayout>
@@ -197,6 +209,20 @@ export default function Performance() {
           </form>
         </div>
 
+        <div className="performance-filter" role="group" aria-label="Filter performance records">
+          {(["all", "tests", "quizzes"] as const).map((filter) => (
+            <button
+              key={filter}
+              type="button"
+              className={recordFilter === filter ? "active" : ""}
+              aria-pressed={recordFilter === filter}
+              onClick={() => setRecordFilter(filter)}
+            >
+              {filter === "all" ? "All" : filter === "tests" ? "Tests" : "Quizzes"}
+            </button>
+          ))}
+        </div>
+
         {!loading && chartData.length > 0 && (
           <div className="card" style={{ marginBottom: 24 }}>
             <h3>Trend over time</h3>
@@ -210,15 +236,26 @@ export default function Performance() {
                   label={{ value: "%", position: "insideLeft" }}
                 />
                 <Tooltip
-                  formatter={(value) => [`${value}%`, "Score"]}
+                  formatter={(value, name) => [`${value}%`, name]}
                   labelFormatter={(_, payload) => payload?.[0]?.payload?.label || ""}
                 />
+                <Legend />
                 <Line
                   type="monotone"
-                  dataKey="percentage"
+                  name="Test"
+                  dataKey="testPercentage"
                   stroke="#4f46e5"
                   strokeWidth={2}
                   dot={{ r: 4, fill: "#4f46e5" }}
+                />
+                <Line
+                  type="monotone"
+                  name="Quiz"
+                  dataKey="quizPercentage"
+                  stroke="#0d9488"
+                  strokeWidth={0}
+                  dot={{ r: 5, fill: "#0d9488", stroke: "#0d9488" }}
+                  activeDot={{ r: 7 }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -229,8 +266,13 @@ export default function Performance() {
           <h3>All results</h3>
           {loading ? (
             <Spinner label="Loading your results..." />
-          ) : records.length === 0 ? (
-            <EmptyState icon={ClipboardList} message="No results yet — add your first one above." />
+          ) : filteredRecords.length === 0 ? (
+            <EmptyState
+              icon={ClipboardList}
+              message={records.length === 0
+                ? "No results yet — add your first one above."
+                : `No ${recordFilter === "tests" ? "test" : "quiz"} results yet.`}
+            />
           ) : (
             <div className="table-scroll">
             <table className="records-table">
@@ -245,24 +287,24 @@ export default function Performance() {
                 </tr>
               </thead>
               <tbody>
-                {records.map((r) => (
+                {filteredRecords.map((r) => (
                   <tr key={r.record_id}>
                     <td>{r.subject_name}</td>
-                    <td>{r.assessment_name}</td>
+                    <td>{r.assessment_name}{r.source === "quiz" && <small className="performance-source-badge">Quiz</small>}</td>
                     <td className="mono">
                       {r.score}/{r.max_score}
                     </td>
                     <td className="mono">{Math.round((r.score / r.max_score) * 100)}%</td>
                     <td className="mono">{r.assessment_date}</td>
                     <td>
-                      <button
+                      {r.source === "quiz" ? <span className="performance-readonly">From quiz attempt</span> : <button
                         className="delete-btn"
                         onClick={() => handleDelete(r.record_id)}
                         aria-label={`Delete ${r.assessment_name}`}
                       >
                         <Trash2 size={13} />
                         Delete
-                      </button>
+                      </button>}
                     </td>
                   </tr>
                 ))}
