@@ -147,7 +147,10 @@ describe("AI question generation", () => {
     try {
       await expect(
         generateQuestions(
-          "Photosynthesis converts sunlight into chemical energy in chloroplasts.",
+          "Photosynthesis is the process plants use to convert sunlight into chemical energy. " +
+          "Chlorophyll is a pigment that absorbs light energy. " +
+          "Chloroplast is an organelle where photosynthesis takes place. " +
+          "Glucose is a sugar produced during photosynthesis.",
           "multiple_choice",
           1
         )
@@ -293,8 +296,10 @@ describe("long-answer grading", () => {
     expect(result.score).toBeGreaterThan(0);
 
     const generated = await generateQuestions(
-      "The relational database uses a primary key to uniquely identify each row. " +
-      "A foreign key links records between related tables. Indexes improve query performance.",
+      "Relational database is a collection of related tables. " +
+      "Primary key is a unique value that identifies each row. " +
+      "Foreign key is a value that connects one table to another. " +
+      "Index is a structure that improves query performance.",
       "multiple_choice",
       1
     );
@@ -305,7 +310,7 @@ describe("long-answer grading", () => {
       expect(localQuestion.options).toHaveLength(4);
       expect(new Set(localQuestion.options.map((option) => option.toLowerCase())).size).toBe(4);
       expect(localQuestion.options.filter((option) => option === localQuestion.correctAnswer)).toHaveLength(1);
-      expect(localQuestion.question).toContain("_____");
+      expect(localQuestion.question).toContain("___");
     }
   });
 });

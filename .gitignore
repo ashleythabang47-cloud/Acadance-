@@ -6,3 +6,6 @@ dist/
 .env.local
 backups/
 saics_db_*.sql
+saics_db_*.sql.gz
+saics_db_*.sql.sha256
+saics_db_*.sql.gz.sha256

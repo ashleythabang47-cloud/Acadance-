@@ -4,6 +4,7 @@ import app from "./app";
 import { testConnection } from "./config/db";
 import { StudentModel } from "./models/studentModel";
 import { attachSignaling } from "./sockets/signaling";
+import { startBackupSchedule } from "./services/backupService";
 
 const httpServer = createServer(app);
 const PORT = process.env.PORT || 5000;
@@ -25,6 +26,7 @@ async function cleanupExpiredUnverifiedStudents() {
 httpServer.listen(PORT, async () => {
   await testConnection();
   await cleanupExpiredUnverifiedStudents();
+  startBackupSchedule();
   setInterval(() => {
     void cleanupExpiredUnverifiedStudents();
   }, 60 * 60 * 1000);

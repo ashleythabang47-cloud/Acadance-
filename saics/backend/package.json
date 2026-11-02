@@ -11,7 +11,8 @@
     "seed:admin": "ts-node src/scripts/seedAdmin.ts",
     "seed:analytics-demo": "ts-node src/scripts/seedAnalyticsDemo.ts",
     "backfill:quiz-performance": "ts-node src/scripts/backfillQuizPerformance.ts",
-    "train:local-engine": "ts-node src/scripts/trainLocalEngine.ts"
+    "train:local-engine": "ts-node src/scripts/trainLocalEngine.ts",
+    "restore:backup": "ts-node src/scripts/restoreBackup.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.112.5",

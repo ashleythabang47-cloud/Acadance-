@@ -1,0 +1,12 @@
+# Version control
+Version control is a system that records changes to files over time. It lets developers compare revisions and restore earlier versions when needed.
+Repository means a storage location that keeps project files and their revision history. Teams use a shared repository to coordinate contributions.
+Commit describes a saved set of changes in a repository. Each commit includes a message that explains the purpose of the update.
+Branch is an independent line of development within a repository. Developers can test changes on a branch before merging them.
+
+# Requirements and testing
+Functional requirement is a statement describing a behavior or service that a product must provide. It explains what users can do, such as submitting an assignment or viewing feedback.
+Non-functional requirement describes a quality or constraint, such as performance, security, or accessibility. It specifies how well a service must work rather than what it does.
+Software development life cycle (SDLC) is a structured sequence of phases used to plan, build, test, deploy, and maintain software. Common phases include requirements analysis, design, implementation, testing, release, and maintenance.
+Unit testing refers to checking a small isolated part of a program, usually a function or module. It helps identify defects early and makes later changes safer.
+Deployment: the process of releasing a tested software version to an environment where users can access it. A deployment checklist verifies configuration and readiness before release.

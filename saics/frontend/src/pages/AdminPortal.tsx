@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import {
-  Activity, AlertTriangle, ArrowDownToLine, ArrowUpRight, Bot, BookOpen, Check, FileText,
+  Activity, AlertTriangle, ArrowDownToLine, ArrowUpRight, Bot, BookOpen, Check, Database, FileText,
   ChevronRight, KeyRound, LayoutDashboard, LogOut, Megaphone, Moon, Plus, RefreshCw,
   Server, Sun, Trash2, Users, X,
 } from "lucide-react";
@@ -24,6 +24,7 @@ const navigation = [
   { label: "Activity Logs", path: "/admin/activity", icon: Activity },
   { label: "Content", path: "/admin/content", icon: BookOpen },
   { label: "AI Monitoring", path: "/admin/ai", icon: Bot },
+  { label: "Backups", path: "/admin/backups", icon: Database },
   { label: "System", path: "/admin/system", icon: Server },
   { label: "Announcements", path: "/admin/announcements", icon: Megaphone },
 ];
@@ -589,6 +590,110 @@ function AdminSystem() {
   </>;
 }
 
+function AdminBackups() {
+  const resource = useResource<Row>("/admin/backups", {});
+  const backups = recordsFrom(resource.data.backups, "backups");
+  const lastSuccessfulBackup = resource.data.lastSuccessfulBackup
+    ? String(resource.data.lastSuccessfulBackup)
+    : null;
+  const stale = !lastSuccessfulBackup ||
+    Date.now() - new Date(lastSuccessfulBackup).getTime() > 48 * 60 * 60 * 1000;
+  const copyConfigured = resource.data.offMachineCopyConfigured === true;
+  const [creating, setCreating] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  async function createBackup() {
+    setCreating(true);
+    setMessage("");
+    setError("");
+    try {
+      const response = await api.post("/admin/backups");
+      const copyError = response.data.copyError as string | null;
+      const retentionError = response.data.retentionError as string | null;
+      const warnings = [copyError, retentionError].filter(Boolean).join(" ");
+      setMessage(warnings
+        ? `Backup saved locally. ${warnings}`
+        : `Backup ${String(response.data.backup?.name ?? "")} completed successfully.`);
+      await resource.reload();
+    } catch (requestError) {
+      const err = requestError as { response?: { data?: { message?: string } } };
+      setError(err.response?.data?.message ?? "Could not create a database backup.");
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  async function downloadBackup(name: string) {
+    setError("");
+    try {
+      const response = await api.get(
+        `/admin/backups/${encodeURIComponent(name)}/download`,
+        { responseType: "blob" }
+      );
+      const url = URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = name;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch {
+      setError("Could not download this backup.");
+    }
+  }
+
+  return <>
+    <PageHeading
+      eyebrow="OPERATIONS"
+      title="Backups"
+      description="Create and verify protected database backups."
+      action={<button className="admin-button primary" disabled={creating} onClick={() => void createBackup()}>
+        {creating ? <Spinner label="Creating backup..." /> : <><Database size={15} /> Backup now</>}
+      </button>}
+    />
+    {creating && <div className="admin-panel admin-state"><Spinner label="Creating and verifying database backup..." /></div>}
+    {message && <div className="admin-toast" role="status">{message}</div>}
+    {error && <div className="admin-panel admin-report-error" role="alert">{error}</div>}
+    {stale && <div className="admin-panel admin-report-error" role="status">
+      <AlertTriangle size={17} /> {lastSuccessfulBackup
+        ? "The latest successful backup is older than 48 hours."
+        : "No successful database backup is available yet."}
+    </div>}
+    {!copyConfigured && <div className="admin-panel admin-report-error" role="status">
+      <AlertTriangle size={17} /> No off-machine backup copy is configured. Set BACKUP_COPY_DIR to a separate drive or synced folder.
+    </div>}
+    <section className="admin-content-section">
+      <div className="admin-section-heading"><div><h2>Backup history</h2>
+        <p>Last successful backup: {lastSuccessfulBackup ? displayDate(lastSuccessfulBackup) : "Never"}</p>
+      </div><button className="admin-button secondary" onClick={() => void resource.reload()}>
+        <RefreshCw size={15} /> Refresh
+      </button></div>
+      <LoadPanel loading={resource.loading} error={resource.error} empty={!backups.length} retry={() => void resource.reload()}>
+        <div className="admin-panel admin-table-panel"><div className="admin-table-scroll">
+          <table className="admin-table"><thead><tr>
+            <th>Backup</th><th>Date</th><th>Size</th><th>Checksum</th><th>Off-machine copy</th><th>Download</th>
+          </tr></thead><tbody>{backups.map((backup, index) => {
+            const name = valueFor(backup, "name");
+            const size = Number(backup.size);
+            return <tr key={name || index}>
+              <td><strong>{name}</strong></td>
+              <td>{displayDate(backup.date)}</td>
+              <td>{Number.isFinite(size) ? `${(size / (1024 * 1024)).toFixed(2)} MB` : "—"}</td>
+              <td>{valueFor(backup, "checksumStatus")}</td>
+              <td>{backup.copied === true ? "Copied" : "Not copied"}</td>
+              <td><button className="admin-button secondary" onClick={() => void downloadBackup(name)}>
+                <ArrowDownToLine size={14} /> Download
+              </button></td>
+            </tr>;
+          })}</tbody></table>
+        </div></div>
+      </LoadPanel>
+    </section>
+  </>;
+}
+
 function AdminAnnouncements() {
   const resource = useResource<unknown>("/admin/announcements", []);
   const announcements = recordsFrom(resource.data, "announcements");
@@ -617,6 +722,7 @@ export default function AdminPortal() {
     <Route path="activity" element={<AdminActivity />} />
     <Route path="content" element={<AdminContent />} />
     <Route path="ai" element={<AdminAI />} />
+    <Route path="backups" element={<AdminBackups />} />
     <Route path="system" element={<AdminSystem />} />
     <Route path="announcements" element={<AdminAnnouncements />} />
     <Route path="*" element={<Navigate to="/admin" replace />} />

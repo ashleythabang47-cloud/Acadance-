@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { requireAdmin, requireAuth } from "../middleware/authMiddleware";
 import { adminActionRateLimit } from "../middleware/adminActionRateLimit";
+import { downloadBackup, getBackups, postBackup } from "../controllers/backupController";
 import { listAtRiskStudents } from "../controllers/analyticsController";
 import { generateAdminReport } from "../controllers/adminReportsController";
 import {
@@ -49,6 +50,9 @@ router.get("/ai/monitoring", getAiMonitoring);
 router.get("/ai/pending", getAiMonitoring);
 router.post("/ai/pending/:id/retry", retryPendingGrade);
 router.get("/system", getSystemHealth);
+router.get("/backups", adminActionRateLimit, getBackups);
+router.post("/backups", adminActionRateLimit, postBackup);
+router.get("/backups/:name/download", adminActionRateLimit, downloadBackup);
 router.get("/announcements", listAdminAnnouncements);
 router.post("/announcements", postAnnouncement);
 
