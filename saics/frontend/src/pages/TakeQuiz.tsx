@@ -29,6 +29,7 @@ interface ResultItem {
     comment: string;
   }[] | null;
   gradingStatus: "pending" | "completed";
+  gradingSource: "ai-provider" | "local-engine" | null;
   correctAnswer: string | null;
 }
 
@@ -156,6 +157,9 @@ export default function TakeQuiz() {
                       </p>
                     )}
                     {r?.feedback && <p className="result-feedback">{r.feedback}</p>}
+                    {r?.gradingSource === "local-engine" && (
+                      <p className="result-feedback">Auto-graded (offline engine)</p>
+                    )}
                     {r?.criterionComments && (
                       <ul className="criterion-comments">
                         {r.criterionComments.map((item) => (

@@ -203,6 +203,7 @@ export default function AdminReports() {
                 <option value="groq">Groq</option>
                 <option value="gemini">Gemini</option>
                 <option value="ollama">Ollama</option>
+                <option value="local-engine">Local engine</option>
               </select>
             </label>
             <label>

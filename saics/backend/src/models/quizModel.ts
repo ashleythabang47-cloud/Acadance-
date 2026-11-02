@@ -1,7 +1,7 @@
 import { pool } from "../config/db";
 import { RowDataPacket, ResultSetHeader } from "mysql2";
 import { GeneratedQuestion } from "../services/aiService";
-import { CriterionComment, RubricCriterion } from "../services/grader";
+import { CriterionComment, GradingSource, RubricCriterion } from "../services/grader";
 
 export interface Quiz {
   quiz_id: number;
@@ -127,12 +127,13 @@ export const QuizModel = {
     feedback: string | null,
     criterionComments: CriterionComment[] | null,
     gradingStatus: AttemptGradingStatus,
-    isCorrect: boolean | null
+    isCorrect: boolean | null,
+    gradingSource: GradingSource | null = null
   ): Promise<void> {
     await pool.query(
       `INSERT INTO quiz_attempt_answers
-        (attempt_id, question_id, student_answer, is_correct, score, max_score, feedback, criterion_comments, grading_status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        (attempt_id, question_id, student_answer, is_correct, score, max_score, feedback, criterion_comments, grading_status, grading_source)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         attemptId,
         questionId,
@@ -143,6 +144,7 @@ export const QuizModel = {
         feedback,
         criterionComments ? JSON.stringify(criterionComments) : null,
         gradingStatus,
+        gradingSource,
       ]
     );
   },

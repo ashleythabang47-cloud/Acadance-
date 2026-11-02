@@ -847,7 +847,7 @@ export async function retryPendingGrade(req: AdminRequest, res: Response) {
       await connection.beginTransaction();
       const [updated] = await connection.query<ResultSetHeader>(
         `UPDATE quiz_attempt_answers
-         SET score = ?, max_score = ?, is_correct = ?, feedback = ?, criterion_comments = ?, grading_status = 'completed'
+         SET score = ?, max_score = ?, is_correct = ?, feedback = ?, criterion_comments = ?, grading_status = 'completed', grading_source = ?
          WHERE answer_id = ? AND grading_status = 'pending'`,
         [
           result.score,
@@ -855,6 +855,7 @@ export async function retryPendingGrade(req: AdminRequest, res: Response) {
           result.score === result.maxScore,
           result.feedback,
           JSON.stringify(result.criterionComments),
+          result.source ?? null,
           answerId,
         ]
       );
@@ -935,6 +936,7 @@ export async function getSystemHealth(_req: AdminRequest, res: Response) {
         groq: Boolean(process.env.GROQ_API_KEY),
         gemini: Boolean(process.env.GEMINI_API_KEY),
         ollama: true,
+        "local-engine": true,
       },
       uptimeSeconds: Math.floor(process.uptime()),
       recentErrors,
@@ -947,6 +949,7 @@ export async function getSystemHealth(_req: AdminRequest, res: Response) {
         groq: Boolean(process.env.GROQ_API_KEY),
         gemini: Boolean(process.env.GEMINI_API_KEY),
         ollama: true,
+        "local-engine": true,
       },
       uptimeSeconds: Math.floor(process.uptime()),
       recentErrors: [],

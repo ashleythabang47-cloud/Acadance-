@@ -16,7 +16,7 @@ export interface AdminReportRange {
 
 export interface AdminReportFilters {
   subjectId?: number;
-  provider?: "groq" | "gemini" | "ollama";
+  provider?: "groq" | "gemini" | "ollama" | "local-engine";
   operation?: "generation" | "grading";
   role?: "student" | "admin";
   level?: "low" | "medium" | "high" | "insufficient_data";

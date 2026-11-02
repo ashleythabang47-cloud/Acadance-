@@ -10,6 +10,7 @@ import {
 } from "../services/aiService";
 import {
   CriterionComment,
+  GradingSource,
   ProviderChainError,
   QuestionType,
   RubricCriterion,
@@ -137,6 +138,7 @@ export async function submitQuizAttempt(req: AuthRequest, res: Response) {
       feedback: string | null;
       criterionComments: CriterionComment[] | null;
       gradingStatus: "pending" | "completed";
+      gradingSource: GradingSource | null;
       correctAnswer: string | null;
     }[] = [];
 
@@ -149,6 +151,7 @@ export async function submitQuizAttempt(req: AuthRequest, res: Response) {
       let maxScore = 1;
       let feedback: string | null = null;
       let criterionComments: CriterionComment[] | null = null;
+      let gradingSource: GradingSource | null = null;
       let gradingStatus: "pending" | "completed" = "completed";
 
       if (question.question_type === "multiple_choice") {
@@ -169,6 +172,7 @@ export async function submitQuizAttempt(req: AuthRequest, res: Response) {
           isCorrect = graded.score === graded.maxScore;
           feedback = graded.feedback;
           criterionComments = graded.criterionComments;
+          gradingSource = graded.source ?? null;
         } catch {
           pendingGrading = true;
           gradingStatus = "pending";
@@ -185,6 +189,7 @@ export async function submitQuizAttempt(req: AuthRequest, res: Response) {
           isCorrect = graded.isCorrect;
           score = graded.isCorrect ? 1 : 0;
           feedback = graded.feedback;
+          gradingSource = graded.source ?? null;
         } catch {
           pendingGrading = true;
           gradingStatus = "pending";
@@ -204,7 +209,8 @@ export async function submitQuizAttempt(req: AuthRequest, res: Response) {
         feedback,
         criterionComments,
         gradingStatus,
-        isCorrect
+        isCorrect,
+        gradingSource
       );
       results.push({
         questionId: answer.questionId,
@@ -214,6 +220,7 @@ export async function submitQuizAttempt(req: AuthRequest, res: Response) {
         feedback,
         criterionComments,
         gradingStatus,
+        gradingSource,
         correctAnswer: question.correct_answer,
       });
     }

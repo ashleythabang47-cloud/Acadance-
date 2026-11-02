@@ -129,6 +129,7 @@ CREATE TABLE quiz_attempt_answers (
     max_score       DECIMAL(5,2),
     feedback        TEXT,
     criterion_comments JSON,
+    grading_source  ENUM('ai-provider', 'local-engine') NULL,
     grading_status  ENUM('pending', 'completed') NOT NULL DEFAULT 'pending',
     FOREIGN KEY (attempt_id) REFERENCES quiz_attempts(attempt_id) ON DELETE CASCADE,
     FOREIGN KEY (question_id) REFERENCES quiz_questions(question_id) ON DELETE CASCADE
@@ -223,7 +224,7 @@ CREATE TABLE audit_logs (
 
 CREATE TABLE ai_provider_events (
     event_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    provider ENUM('groq', 'gemini', 'ollama') NOT NULL,
+    provider ENUM('groq', 'gemini', 'ollama', 'local-engine') NOT NULL,
     operation ENUM('generation', 'grading') NOT NULL,
     succeeded BOOLEAN NOT NULL,
     rate_limited BOOLEAN NOT NULL DEFAULT FALSE,

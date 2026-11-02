@@ -326,7 +326,12 @@ describe("admin portal acceptance", () => {
     expect(responses).not.toContain(geminiValue);
     expect(responses).not.toContain("gsk_");
     expect(responses).not.toContain("AIza");
-    expect(health.body.providers).toEqual({ groq: true, gemini: true, ollama: true });
+    expect(health.body.providers).toEqual({
+      groq: true,
+      gemini: true,
+      ollama: true,
+      "local-engine": true,
+    });
     delete process.env.GROQ_API_KEY;
     delete process.env.GEMINI_API_KEY;
   });

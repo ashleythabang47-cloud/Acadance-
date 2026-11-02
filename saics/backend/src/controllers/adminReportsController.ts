@@ -70,8 +70,8 @@ function parseFilters(req: AuthRequest, res: Response): AdminReportFilters | nul
     filters.subjectId = subjectId;
   }
   if (req.query.provider !== undefined) {
-    if (!["groq", "gemini", "ollama"].includes(String(req.query.provider)) || type !== "ai-usage") {
-      res.status(400).json({ message: "provider must be groq, gemini or ollama for the AI usage report." });
+    if (!["groq", "gemini", "ollama", "local-engine"].includes(String(req.query.provider)) || type !== "ai-usage") {
+      res.status(400).json({ message: "provider must be groq, gemini, ollama or local-engine for the AI usage report." });
       return null;
     }
     filters.provider = req.query.provider as AdminReportFilters["provider"];

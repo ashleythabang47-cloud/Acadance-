@@ -176,7 +176,61 @@ describe("POST /api/quizzes/:id/submit", () => {
     expect(mockedAiService.gradeOpenEndedAnswer).toHaveBeenCalledTimes(1);
   });
 
-  it("saves provider failures as pending grading rather than a zero", async () => {
+  it("returns and stores the offline grading source", async () => {
+    mockedQuizModel.getQuestionsWithAnswers.mockResolvedValue([{
+      question_id: 4,
+      quiz_id: 55,
+      question_text: "Explain photosynthesis.",
+      question_type: "long_answer",
+      correct_answer: "Plants use light energy.",
+      model_answer: "Plants use light energy.",
+      rubric: [{ criterion: "Light energy", points: 2 }],
+      option_a: null,
+      option_b: null,
+      option_c: null,
+      option_d: null,
+    }]);
+    mockedQuizModel.createAttempt.mockResolvedValue(203);
+    mockedAiService.gradeLongAnswer.mockResolvedValue({
+      score: 2,
+      maxScore: 2,
+      feedback: "Accurate explanation.",
+      criterionComments: [{
+        criterion: "Light energy",
+        points: 2,
+        maxPoints: 2,
+        comment: "Covers: light energy",
+      }],
+      source: "local-engine",
+    });
+
+    const res = await request(app)
+      .post("/api/quizzes/55/submit")
+      .set("Authorization", `Bearer ${authToken}`)
+      .send({ answers: [{ questionId: 4, studentAnswer: "Plants use light energy." }] });
+
+    expect(res.status).toBe(200);
+    expect(res.body.results[0].gradingSource).toBe("local-engine");
+    expect(mockedQuizModel.recordAnswer).toHaveBeenCalledWith(
+      203,
+      4,
+      "Plants use light energy.",
+      2,
+      2,
+      "Accurate explanation.",
+      [{
+        criterion: "Light energy",
+        points: 2,
+        maxPoints: 2,
+        comment: "Covers: light energy",
+      }],
+      "completed",
+      true,
+      "local-engine"
+    );
+  });
+
+  it("keeps an unexpected grader error pending rather than saving a zero", async () => {
     mockedQuizModel.getQuestionsWithAnswers.mockResolvedValue([
       {
         question_id: 5,
@@ -214,6 +268,7 @@ describe("POST /api/quizzes/:id/submit", () => {
       null,
       null,
       "pending",
+      null,
       null
     );
     expect(mockedQuizModel.completeAttempt).toHaveBeenCalledWith(

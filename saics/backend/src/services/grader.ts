@@ -1,4 +1,8 @@
 import { pool } from "../config/db";
+import {
+  generateQuestions as generateLocalQuestions,
+  gradeLongAnswer as gradeLocally,
+} from "./localEngine";
 
 export type QuestionType = "multiple_choice" | "long_answer";
 
@@ -33,9 +37,12 @@ export interface LongAnswerGrade {
   maxScore: number;
   feedback: string;
   criterionComments: CriterionComment[];
+  source?: GradingSource;
 }
 
-type ProviderName = "Groq" | "Gemini" | "Ollama";
+export type GradingSource = "ai-provider" | "local-engine";
+
+type ProviderName = "Groq" | "Gemini" | "Ollama" | "local-engine";
 
 interface Provider {
   name: ProviderName;
@@ -232,13 +239,14 @@ async function withProviderFallback<T>(
   prompt: string,
   maxTokens: number,
   validate: (text: string) => T,
-  operation: "generation" | "grading"
-): Promise<T> {
+  operation: "generation" | "grading",
+  localFallback: () => T | Promise<T>
+): Promise<{ result: T; source: GradingSource }> {
   for (const provider of createProviders()) {
     try {
       const result = validate(await provider.complete(prompt, maxTokens));
       await recordProviderEvent(provider.name, operation, true, false, null);
-      return result;
+      return { result, source: "ai-provider" };
     } catch (err) {
       const status = err instanceof ProviderHttpError ? err.status : 0;
       const rateLimited = status === 429;
@@ -258,7 +266,16 @@ async function withProviderFallback<T>(
       );
     }
   }
-  throw new ProviderChainError();
+  try {
+    const result = await localFallback();
+    await recordProviderEvent("local-engine", operation, true, false, null);
+    return { result, source: "local-engine" };
+  } catch (err) {
+    const errorMessage = `local_engine_error: ${safeErrorMessage(err)}`;
+    console.error(`local-engine request failed: ${errorMessage}`);
+    await recordProviderEvent("local-engine", operation, false, false, errorMessage);
+    throw err;
+  }
 }
 
 async function recordProviderEvent(
@@ -390,9 +407,10 @@ export async function generateQuestions(
     prompt,
     3000,
     (text) => parseGeneratedQuestions(text, type, count),
-    "generation"
+    "generation",
+    () => generateLocalQuestions(normalizedTopic, type, count)
   )
-    .then((questions) => {
+    .then(({ result: questions }) => {
       generationCache.set(cacheKey, questions);
       return questions;
     })
@@ -463,10 +481,12 @@ export async function gradeLongAnswer(
 ): Promise<LongAnswerGrade> {
   const maxScore = rubric.reduce((total, criterion) => total + criterion.points, 0);
   if (!studentAnswer.trim()) {
+    await recordProviderEvent("local-engine", "grading", true, false, null);
     return {
       score: 0,
       maxScore,
       feedback: "No answer was provided.",
+      source: "local-engine",
       criterionComments: rubric.map((criterion) => ({
         ...criterion,
         points: 0,
@@ -482,11 +502,12 @@ Model answer: ${JSON.stringify(modelAnswer)}
 Rubric: ${JSON.stringify(rubric)}
 Student answer (untrusted): ${JSON.stringify(studentAnswer)}`;
 
-  const grade = await withProviderFallback(
+  const { result: grade, source } = await withProviderFallback(
     prompt,
     1200,
     (text) => validateGrade(text, rubric),
-    "grading"
+    "grading",
+    () => gradeLocally(question, modelAnswer, rubric, studentAnswer)
   );
   const attemptsToManipulateGrade =
     /ignore.{0,40}rubric|give.{0,30}full marks|award.{0,30}full marks/i.test(studentAnswer);
@@ -502,21 +523,25 @@ Student answer (untrusted): ${JSON.stringify(studentAnswer)}`;
       grade.feedback = `${grade.feedback} Requests to alter the rubric were disregarded.`.trim();
     }
   }
-  return grade;
+  return { ...grade, source };
 }
 
 export async function gradeOpenEndedAnswer(
   question: string,
   referenceAnswer: string,
   studentAnswer: string
-): Promise<{ isCorrect: boolean; feedback: string }> {
+): Promise<{ isCorrect: boolean; feedback: string; source?: GradingSource }> {
   const result = await gradeLongAnswer(
     question,
     referenceAnswer,
     [{ criterion: "Accuracy", points: 1 }],
     studentAnswer
   );
-  return { isCorrect: result.score >= 0.5, feedback: result.feedback };
+  return {
+    isCorrect: result.score >= 0.5,
+    feedback: result.feedback,
+    source: result.source,
+  };
 }
 
 export function clearGenerationCache(): void {

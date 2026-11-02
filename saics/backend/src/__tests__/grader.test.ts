@@ -146,8 +146,12 @@ describe("AI question generation", () => {
 
     try {
       await expect(
-        generateQuestions("photosynthesis", "multiple_choice", 1)
-      ).rejects.toThrow("AI grading is temporarily unavailable");
+        generateQuestions(
+          "Photosynthesis converts sunlight into chemical energy in chloroplasts.",
+          "multiple_choice",
+          1
+        )
+      ).resolves.toHaveLength(1);
 
       expect(consoleError).toHaveBeenCalledWith(
         expect.stringContaining("Groq request failed: provider_http_error: HTTP 400: Invalid model")
@@ -275,5 +279,33 @@ describe("long-answer grading", () => {
     expect(String(fetchMock.mock.calls[0][0])).toContain(
       "generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
     );
+  });
+
+  it("falls back to local grading and extractive generation when providers fail", async () => {
+    global.fetch = jest.fn().mockRejectedValue(new Error("provider unavailable"));
+    const result = await gradeLongAnswer(
+      "Explain a primary key.",
+      "A primary key uniquely identifies each row in a database table.",
+      [{ criterion: "Primary key uniquely identifies rows", points: 4 }],
+      "A primary key uniquely identifies each row in a database table."
+    );
+    expect(result.source).toBe("local-engine");
+    expect(result.score).toBeGreaterThan(0);
+
+    const generated = await generateQuestions(
+      "The relational database uses a primary key to uniquely identify each row. " +
+      "A foreign key links records between related tables. Indexes improve query performance.",
+      "multiple_choice",
+      1
+    );
+    expect(generated).toHaveLength(1);
+    const localQuestion = generated[0];
+    expect(localQuestion).toHaveProperty("options");
+    if ("options" in localQuestion) {
+      expect(localQuestion.options).toHaveLength(4);
+      expect(new Set(localQuestion.options.map((option) => option.toLowerCase())).size).toBe(4);
+      expect(localQuestion.options.filter((option) => option === localQuestion.correctAnswer)).toHaveLength(1);
+      expect(localQuestion.question).toContain("_____");
+    }
   });
 });
