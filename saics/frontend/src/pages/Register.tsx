@@ -4,6 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { UserPlus } from "lucide-react";
 import { api } from "../api/client";
 import BarField from "../components/BarField";
+import AuthFeatures from "../components/AuthFeatures";
 import Spinner from "../components/Spinner";
 import PasswordField from "../components/PasswordField";
 import { getPasswordStrength } from "../../../backend/src/utils/passwordStrength";
@@ -64,7 +65,7 @@ export default function Register() {
     <div className="auth-shell">
       <div className="auth-brand-panel">
         <BarField />
-        <div className="wordmark">Acadance</div>
+        <div className="wordmark"><span className="wordmark-mark" aria-hidden="true"><i /><i /><i /></span>Acadance</div>
         <div className="tagline">
           <h2>Every session adds a beat.</h2>
           <p>
@@ -72,6 +73,7 @@ export default function Register() {
             actually learn from.
           </p>
         </div>
+        <AuthFeatures />
       </div>
 
       <div className="auth-form-panel">

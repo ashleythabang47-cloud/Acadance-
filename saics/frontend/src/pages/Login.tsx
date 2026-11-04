@@ -5,6 +5,7 @@ import { LogIn } from "lucide-react";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import BarField from "../components/BarField";
+import AuthFeatures from "../components/AuthFeatures";
 import Spinner from "../components/Spinner";
 
 export default function Login() {
@@ -45,7 +46,7 @@ export default function Login() {
     <div className="auth-shell">
       <div className="auth-brand-panel">
         <BarField />
-        <div className="wordmark">Acadance</div>
+        <div className="wordmark"><span className="wordmark-mark" aria-hidden="true"><i /><i /><i /></span>Acadance</div>
         <div className="tagline">
           <h2>Find your study rhythm.</h2>
           <p>
@@ -53,6 +54,7 @@ export default function Login() {
             momentum going — one session at a time.
           </p>
         </div>
+        <AuthFeatures />
       </div>
 
       <div className="auth-form-panel">

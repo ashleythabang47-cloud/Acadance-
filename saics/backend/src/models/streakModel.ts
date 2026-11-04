@@ -1,6 +1,6 @@
 import { pool } from "../config/db";
 import { RowDataPacket, ResultSetHeader } from "mysql2";
-import { toDateString, computeNextStreak } from "../utils/streakLogic";
+import { toDateString, computeNextStreak, normalizeDateValue } from "../utils/streakLogic";
 
 export interface StreakInfo {
   current_streak: number;
@@ -86,21 +86,32 @@ export const StreakModel = {
 
   /** Last 7 calendar days of activity, oldest first, zero-filled for gaps. */
   async getLast7Days(studentId: number): Promise<DayActivity[]> {
+    return StreakModel.getActivityRange(studentId, 7);
+  },
+
+  /**
+   * The last `days` calendar days of activity (today included), oldest
+   * first and zero-filled for gaps. Powers both the 7-day cadence bars and
+   * the longer activity heatmap on the Streak page.
+   */
+  async getActivityRange(studentId: number, days: number): Promise<DayActivity[]> {
+    const span = Math.min(Math.max(Math.floor(days) || 7, 1), 371);
     const [rows] = await pool.query<RowDataPacket[]>(
       `SELECT activity_date, activity_count
        FROM daily_activity
-       WHERE student_id = ? AND activity_date >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+       WHERE student_id = ? AND activity_date >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
        ORDER BY activity_date ASC`,
-      [studentId]
+      [studentId, span]
     );
 
     const byDate = new Map<string, number>();
-    for (const row of rows as { activity_date: string; activity_count: number }[]) {
-      byDate.set(row.activity_date, row.activity_count);
+    for (const row of rows as { activity_date: unknown; activity_count: number }[]) {
+      const key = normalizeDateValue(row.activity_date);
+      if (key) byDate.set(key, Number(row.activity_count) || 0);
     }
 
     const result: DayActivity[] = [];
-    for (let i = 6; i >= 0; i--) {
+    for (let i = span - 1; i >= 0; i--) {
       const d = new Date();
       d.setUTCDate(d.getUTCDate() - i);
       const dateStr = toDateString(d);

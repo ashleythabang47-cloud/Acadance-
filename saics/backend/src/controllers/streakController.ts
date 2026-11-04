@@ -4,11 +4,20 @@ import { StreakModel } from "../models/streakModel";
 
 export async function getMyStreak(req: AuthRequest, res: Response) {
   try {
-    const [streakInfo, last7Days] = await Promise.all([
+    // Optional ?days=N (8–371) adds a longer `activity` history for the
+    // heatmap. Without it the response shape is unchanged.
+    const requestedDays = Number(req.query.days);
+    const wantsHistory = Number.isInteger(requestedDays) && requestedDays > 7;
+    const [streakInfo, last7Days, activity] = await Promise.all([
       StreakModel.getStreakInfo(req.studentId!),
       StreakModel.getLast7Days(req.studentId!),
+      wantsHistory ? StreakModel.getActivityRange(req.studentId!, requestedDays) : Promise.resolve(undefined),
     ]);
-    return res.status(200).json({ streak: streakInfo, last7Days });
+    return res.status(200).json({
+      streak: streakInfo,
+      last7Days,
+      ...(activity ? { activity } : {}),
+    });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Server error fetching streak." });
