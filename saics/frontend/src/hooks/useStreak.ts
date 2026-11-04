@@ -8,28 +8,36 @@ export interface StreakData {
     last_activity_date: string | null;
   };
   last7Days: { date: string; count: number }[];
+  /** Present only when a longer history was requested (`historyDays`). */
+  activity?: { date: string; count: number }[];
 }
 
-export function useStreak(checkInOnLoad = false) {
+export function useStreak(checkInOnLoad = false, historyDays?: number) {
   const [data, setData] = useState<StreakData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
+    let active = true;
     async function load() {
       try {
         if (checkInOnLoad) {
-          await api.post("/streaks/checkin");
+          await api.post("/streaks/checkin").catch(() => {});
         }
-        const res = await api.get("/streaks/me");
-        setData(res.data);
+        const res = await api.get("/streaks/me", historyDays ? { params: { days: historyDays } } : undefined);
+        if (active) setData(res.data);
       } catch (err) {
         console.error("Failed to load streak data", err);
+        if (active) setError(true);
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     }
     load();
-  }, [checkInOnLoad]);
+    return () => {
+      active = false;
+    };
+  }, [checkInOnLoad, historyDays]);
 
-  return { data, loading };
+  return { data, loading, error };
 }

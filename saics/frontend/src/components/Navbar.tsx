@@ -13,11 +13,13 @@ import {
   X,
   ChevronDown,
   LogOut,
+  Search,
 } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import NotificationBell from "./NotificationBell";
 import { handleKeyActivation } from "../utils/a11y";
+import { OPEN_PALETTE_EVENT } from "./CommandPalette";
 
 const API_ORIGIN = "http://localhost:5000";
 
@@ -88,7 +90,17 @@ export default function Navbar() {
     <header className="navbar">
       <div className="navbar-inner">
         <div className="navbar-left">
-          <div className="wordmark">Acadance</div>
+          <div
+            className="wordmark"
+            onClick={() => go("/dashboard")}
+            onKeyDown={handleKeyActivation(() => go("/dashboard"))}
+            role="button"
+            tabIndex={0}
+            aria-label="Acadance home"
+          >
+            <span className="wordmark-mark" aria-hidden="true"><i /><i /><i /></span>
+            Acadance
+          </div>
 
           <nav className="navbar-links">
             {navItems.map((item) => {
@@ -111,6 +123,17 @@ export default function Navbar() {
         </div>
 
         <div className="navbar-right">
+          <button
+            className="navbar-search-trigger"
+            onClick={() => window.dispatchEvent(new Event(OPEN_PALETTE_EVENT))}
+            aria-label="Search and quick actions (Ctrl+K)"
+            title="Search and quick actions"
+          >
+            <Search size={15} />
+            <span className="navbar-search-label">Search</span>
+            <kbd>Ctrl K</kbd>
+          </button>
+
           <NotificationBell />
 
           <button

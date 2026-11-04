@@ -1,4 +1,4 @@
-import { daysBetween, computeNextStreak } from "../utils/streakLogic";
+import { daysBetween, computeNextStreak, normalizeDateValue } from "../utils/streakLogic";
 
 describe("daysBetween", () => {
   it("returns 0 for the same date", () => {
@@ -63,5 +63,25 @@ describe("computeNextStreak", () => {
     );
     expect(result.changed).toBe(false);
     expect(result.current_streak).toBe(3);
+  });
+});
+
+describe("normalizeDateValue", () => {
+  it("passes through YYYY-MM-DD strings", () => {
+    expect(normalizeDateValue("2026-07-20")).toBe("2026-07-20");
+  });
+
+  it("trims ISO timestamps to the date part", () => {
+    expect(normalizeDateValue("2026-07-20T00:00:00.000Z")).toBe("2026-07-20");
+  });
+
+  it("formats mysql2 Date objects (local midnight) as the stored calendar date", () => {
+    expect(normalizeDateValue(new Date(2026, 6, 20))).toBe("2026-07-20");
+  });
+
+  it("returns null for unusable values", () => {
+    expect(normalizeDateValue(null)).toBeNull();
+    expect(normalizeDateValue("not a date")).toBeNull();
+    expect(normalizeDateValue(new Date("invalid"))).toBeNull();
   });
 });

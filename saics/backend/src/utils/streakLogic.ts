@@ -2,6 +2,23 @@ export function toDateString(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
+/**
+ * mysql2 returns DATE columns as JS Date objects (local midnight) unless the
+ * pool is configured with dateStrings. Normalise either shape to YYYY-MM-DD
+ * so it can be compared with the keys produced by toDateString().
+ */
+export function normalizeDateValue(value: unknown): string | null {
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) return null;
+    const y = value.getFullYear();
+    const m = String(value.getMonth() + 1).padStart(2, "0");
+    const d = String(value.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}/.test(value)) return value.slice(0, 10);
+  return null;
+}
+
 export function daysBetween(a: string, b: string): number {
   const dateA = new Date(a + "T00:00:00Z");
   const dateB = new Date(b + "T00:00:00Z");

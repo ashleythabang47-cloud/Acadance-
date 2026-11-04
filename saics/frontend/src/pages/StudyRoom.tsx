@@ -1,11 +1,55 @@
 import { useEffect, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { io, Socket } from "socket.io-client";
-import { Mic, MicOff, PhoneOff } from "lucide-react";
+import { Mic, MicOff, PhoneOff, Copy, Check, Clock3, Users, Radio } from "lucide-react";
 import { api } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import AppLayout from "../components/AppLayout";
 import Spinner from "../components/Spinner";
+import { useSpeaking } from "../hooks/useAudioLevel";
+import { useToast } from "../context/ToastContext";
+
+function ParticipantTile({
+  name,
+  stream,
+  color,
+  you,
+  muted,
+  children,
+}: {
+  name: string;
+  stream: MediaStream | null;
+  color?: string;
+  you?: boolean;
+  muted?: boolean;
+  children?: ReactNode;
+}) {
+  const speaking = useSpeaking(muted ? null : stream);
+  return (
+    <div className={`participant-tile ${you ? "you" : ""} ${speaking ? "speaking" : ""}`}>
+      <div className="avatar-ring">
+        <div className="avatar-circle" style={color ? { background: color } : undefined}>
+          {name.charAt(0) || "?"}
+        </div>
+      </div>
+      <p>{name}{you ? " (you)" : ""}</p>
+      {muted ? (
+        <span className="muted-tag"><MicOff size={11} /> Muted</span>
+      ) : (
+        <span className={`speaking-tag ${speaking ? "on" : ""}`}>{speaking ? "Speaking" : "Listening"}</span>
+      )}
+      {children}
+    </div>
+  );
+}
+
+const fmtClock = (s: number) => {
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  return `${h ? `${h}:` : ""}${String(m).padStart(h ? 2 : 1, "0")}:${String(sec).padStart(2, "0")}`;
+};
 
 interface PeerInfo {
   socketId: string;
@@ -24,6 +68,11 @@ export default function StudyRoom() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { student } = useAuth();
+  const toast = useToast();
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [joinedAt] = useState(() => Date.now());
+  const [elapsed, setElapsed] = useState(0);
+  const [copied, setCopied] = useState(false);
 
   const [sessionTitle, setSessionTitle] = useState("");
   const [joinCode, setJoinCode] = useState("");
@@ -54,6 +103,7 @@ export default function StudyRoom() {
           return;
         }
         localStreamRef.current = localStream;
+        setLocalStream(localStream);
 
         // 3. Connect to the signaling server.
         const token = localStorage.getItem("saics_token");
@@ -176,6 +226,22 @@ export default function StudyRoom() {
     setMuted(!muted);
   }
 
+  useEffect(() => {
+    const t = window.setInterval(() => setElapsed(Math.floor((Date.now() - joinedAt) / 1000)), 1000);
+    return () => window.clearInterval(t);
+  }, [joinedAt]);
+
+  async function copyCode() {
+    try {
+      await navigator.clipboard.writeText(joinCode);
+      setCopied(true);
+      toast.success("Invite code copied");
+      setTimeout(() => setCopied(false), 1600);
+    } catch {
+      toast.error("Could not copy the code.");
+    }
+  }
+
   function handleLeaveRoom() {
     navigate("/study-sessions");
   }
@@ -189,9 +255,19 @@ export default function StudyRoom() {
           {joinCode && (
             <p className="room-code-tag">
               Invite code: <span className="mono">{joinCode}</span>
+              <button type="button" className="copy-btn" onClick={() => void copyCode()} aria-label="Copy invite code">
+                {copied ? <Check size={13} /> : <Copy size={13} />}
+              </button>
             </p>
           )}
         </div>
+        {!connecting && !error && (
+          <div className="quiz-meta-chips">
+            <span className="meta-chip live"><Radio size={14} /> Live</span>
+            <span className="meta-chip"><Users size={14} /> {remotePeers.length + 1} in room</span>
+            <span className="meta-chip mono"><Clock3 size={14} /> {fmtClock(elapsed)}</span>
+          </div>
+        )}
       </header>
 
       {error && <div className="error-banner" style={{ marginBottom: 20 }}>{error}</div>}
@@ -201,30 +277,31 @@ export default function StudyRoom() {
       ) : (
         <>
           <div className="room-participants">
-            <div className="participant-tile you">
-              <div className="avatar-circle" style={{ background: student?.avatarColor || "#4f46e5" }}>
-                {student?.fullName?.charAt(0) || "?"}
-              </div>
-              <p>{student?.fullName} (you)</p>
-              {muted && <span className="muted-tag">Muted</span>}
-            </div>
+            <ParticipantTile
+              name={student?.fullName || "You"}
+              stream={localStream}
+              color={student?.avatarColor || "#4f46e5"}
+              you
+              muted={muted}
+            />
 
             {remotePeers.map((peer) => (
-              <div key={peer.socketId} className="participant-tile">
-                <div className="avatar-circle">{peer.fullName.charAt(0)}</div>
-                <p>{peer.fullName}</p>
+              <ParticipantTile key={peer.socketId} name={peer.fullName} stream={peer.stream}>
                 <audio
                   autoPlay
                   ref={(el) => {
                     if (el) el.srcObject = peer.stream;
                   }}
                 />
-              </div>
+              </ParticipantTile>
             ))}
           </div>
+          {remotePeers.length === 0 && (
+            <p className="room-waiting">Waiting for others to join — share the invite code above.</p>
+          )}
 
           <div className="room-controls">
-            <button className="mute-btn" onClick={toggleMute}>
+            <button className={`mute-btn ${muted ? "is-muted" : ""}`} onClick={toggleMute} aria-pressed={muted}>
               {muted ? <MicOff size={16} /> : <Mic size={16} />}
               {muted ? "Unmute" : "Mute"}
             </button>

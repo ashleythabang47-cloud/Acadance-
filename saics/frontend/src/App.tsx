@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
+import { ToastProvider } from "./context/ToastContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Spinner from "./components/Spinner";
 // Login/Register stay eagerly loaded — they're the first thing an
@@ -11,6 +12,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import VerifyEmail from "./pages/VerifyEmail";
 import "./index.css";
+import "./styles/ui.css";
 
 // Everything past the login wall is lazy-loaded. These pages pull in
 // heavier dependencies (Recharts, Socket.IO, Lucide icon sets) that a
@@ -39,6 +41,7 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
+        <ToastProvider>
         <BrowserRouter>
           <Suspense fallback={<PageFallback />}>
             <Routes>
@@ -129,6 +132,7 @@ function App() {
             </Routes>
           </Suspense>
         </BrowserRouter>
+        </ToastProvider>
       </AuthProvider>
     </ThemeProvider>
   );
