@@ -12,6 +12,8 @@ interface OtpState {
   expires_at: Date;
   attempts: number;
   created_at: Date;
+  is_active: boolean;
+  is_expired: boolean;
 }
 
 let otpState: OtpState | null;
@@ -45,6 +47,8 @@ const connection = {
         expires_at: new Date(Date.now() + 10 * 60 * 1000),
         attempts: 0,
         created_at: new Date(),
+        is_active: true,
+        is_expired: false,
       };
       return [{ affectedRows: 1 }, []] as const;
     }
@@ -99,14 +103,19 @@ describe("EmailOtpModel.verify", () => {
       expires_at: new Date(Date.now() + 10 * 60 * 1000),
       attempts: 0,
       created_at: new Date(),
+      is_active: true,
+      is_expired: false,
     };
 
     for (let attempt = 0; attempt < 5; attempt += 1) {
-      expect(await EmailOtpModel.verify(42, hashOtp(createOtp()))).toBe("invalid");
+      expect(await EmailOtpModel.verify(42, hashOtp(createOtp()))).toBe(
+        attempt === 4 ? "attempts-exceeded" : "hash-mismatch"
+      );
     }
 
     expect(otpState).toBeNull();
     expect(emailVerified).toBe(false);
+    expect(await EmailOtpModel.verify(42, hashOtp(createOtp()))).toBe("no-active-otp");
   });
 
   it("rejects and removes an expired code", async () => {
@@ -115,6 +124,8 @@ describe("EmailOtpModel.verify", () => {
       expires_at: new Date(Date.now() - 1),
       attempts: 0,
       created_at: new Date(),
+      is_active: false,
+      is_expired: true,
     };
 
     expect(await EmailOtpModel.verify(42, hashOtp(createOtp()))).toBe("expired");
@@ -128,11 +139,62 @@ describe("EmailOtpModel.verify", () => {
       expires_at: new Date(Date.now() + 10 * 60 * 1000),
       attempts: 0,
       created_at: new Date(),
+      is_active: true,
+      is_expired: false,
     };
 
     expect(await EmailOtpModel.verify(42, hashOtp(otp))).toBe("verified");
     expect(emailVerified).toBe(true);
     expect(otpState).toBeNull();
-    expect(await EmailOtpModel.verify(42, hashOtp(otp))).toBe("invalid");
+    expect(await EmailOtpModel.verify(42, hashOtp(otp))).toBe("no-active-otp");
+  });
+
+  it("verifies a leading-zero code", async () => {
+    const otp = "004821";
+    otpState = {
+      otp_hash: hashOtp(otp),
+      expires_at: new Date(Date.now() + 10 * 60 * 1000),
+      attempts: 0,
+      created_at: new Date(),
+      is_active: true,
+      is_expired: false,
+    };
+
+    expect(await EmailOtpModel.verify(42, hashOtp(otp))).toBe("verified");
+  });
+
+  it("uses MySQL expiry state rather than the JavaScript Date timezone", async () => {
+    const otp = "004821";
+    otpState = {
+      otp_hash: hashOtp(otp),
+      expires_at: new Date(Date.now() - 60 * 60 * 1000),
+      attempts: 0,
+      created_at: new Date(),
+      is_active: true,
+      is_expired: false,
+    };
+
+    expect(await EmailOtpModel.verify(42, hashOtp(otp))).toBe("verified");
+    expect(connection.query).toHaveBeenCalledWith(
+      expect.stringContaining("expires_at > NOW()"),
+      [42]
+    );
+  });
+
+  it("invalidates the previous code when a resend replaces it", async () => {
+    const oldOtp = "004821";
+    const newOtp = "901274";
+    otpState = {
+      otp_hash: hashOtp(oldOtp),
+      expires_at: new Date(Date.now() + 10 * 60 * 1000),
+      attempts: 0,
+      created_at: new Date(Date.now() - 61 * 1000),
+      is_active: true,
+      is_expired: false,
+    };
+
+    expect(await EmailOtpModel.reserveResend(42, hashOtp(newOtp))).toBe(true);
+    expect(await EmailOtpModel.verify(42, hashOtp(oldOtp))).toBe("hash-mismatch");
+    expect(await EmailOtpModel.verify(42, hashOtp(newOtp))).toBe("verified");
   });
 });

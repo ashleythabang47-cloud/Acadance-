@@ -3,12 +3,18 @@ import { RowDataPacket } from "mysql2";
 import { PoolConnection } from "mysql2/promise";
 import { pool } from "../config/db";
 
-type VerificationResult = "verified" | "invalid" | "expired";
+export type VerificationResult =
+  | "verified"
+  | "no-active-otp"
+  | "expired"
+  | "hash-mismatch"
+  | "attempts-exceeded";
 
 interface OtpRow extends RowDataPacket {
   otp_hash: string;
-  expires_at: Date;
   attempts: number;
+  is_active: number | boolean;
+  is_expired: number | boolean;
 }
 
 async function canReserveResend(connection: PoolConnection, studentId: number): Promise<boolean> {
@@ -38,9 +44,9 @@ async function replaceOtp(
 ): Promise<void> {
   await connection.query(
     `INSERT INTO email_otps (student_id, otp_hash, expires_at, attempts, created_at)
-     VALUES (?, ?, DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 10 MINUTE), 0, CURRENT_TIMESTAMP)
+     VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE), 0, NOW())
      ON DUPLICATE KEY UPDATE otp_hash = VALUES(otp_hash),
-       expires_at = VALUES(expires_at), attempts = 0, created_at = CURRENT_TIMESTAMP`,
+       expires_at = VALUES(expires_at), attempts = 0, created_at = NOW()`,
     [studentId, otpHash]
   );
 }
@@ -49,9 +55,9 @@ export const EmailOtpModel = {
   async save(studentId: number, otpHash: string): Promise<void> {
     await pool.query(
       `INSERT INTO email_otps (student_id, otp_hash, expires_at, attempts, created_at)
-       VALUES (?, ?, DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 10 MINUTE), 0, CURRENT_TIMESTAMP)
+       VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE), 0, NOW())
        ON DUPLICATE KEY UPDATE otp_hash = VALUES(otp_hash),
-         expires_at = VALUES(expires_at), attempts = 0, created_at = CURRENT_TIMESTAMP`,
+         expires_at = VALUES(expires_at), attempts = 0, created_at = NOW()`,
       [studentId, otpHash]
     );
   },
@@ -130,20 +136,35 @@ export const EmailOtpModel = {
     try {
       await connection.beginTransaction();
       const [rows] = await connection.query<OtpRow[]>(
-        `SELECT otp_hash, expires_at, attempts FROM email_otps
-         WHERE student_id = ? FOR UPDATE`,
+        `SELECT otp_hash, attempts, expires_at > NOW() AS is_active,
+                expires_at <= NOW() AS is_expired
+         FROM email_otps
+         WHERE student_id = ?
+         ORDER BY created_at DESC
+         LIMIT 1 FOR UPDATE`,
         [studentId]
       );
       const otp = rows[0];
       if (!otp) {
         await connection.commit();
-        return "invalid";
+        return "no-active-otp";
       }
 
-      if (new Date(otp.expires_at).getTime() <= Date.now()) {
+      if (!Number(otp.is_active) && Number(otp.is_expired)) {
         await connection.query(`DELETE FROM email_otps WHERE student_id = ?`, [studentId]);
         await connection.commit();
         return "expired";
+      }
+
+      if (!Number(otp.is_active)) {
+        await connection.commit();
+        return "no-active-otp";
+      }
+
+      if (Number(otp.attempts) >= 5) {
+        await connection.query(`DELETE FROM email_otps WHERE student_id = ?`, [studentId]);
+        await connection.commit();
+        return "attempts-exceeded";
       }
 
       const storedHash = Buffer.from(otp.otp_hash, "hex");
@@ -163,7 +184,7 @@ export const EmailOtpModel = {
           );
         }
         await connection.commit();
-        return "invalid";
+        return nextAttempts >= 5 ? "attempts-exceeded" : "hash-mismatch";
       }
 
       await connection.query(

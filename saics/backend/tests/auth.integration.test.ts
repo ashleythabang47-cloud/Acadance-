@@ -4,7 +4,11 @@ import { Student, StudentModel } from "../src/models/studentModel";
 import { StreakModel } from "../src/models/streakModel";
 import { NotificationModel } from "../src/models/notificationModel";
 import { EmailOtpModel } from "../src/models/emailOtpModel";
-import { sendVerificationCode } from "../src/services/emailVerification";
+import {
+  EmailDeliveryStatusUnknownError,
+  hashOtp,
+  sendVerificationCode,
+} from "../src/services/emailVerification";
 import { recordAudit } from "../src/services/auditLog";
 
 jest.mock("../src/models/studentModel");
@@ -138,7 +142,7 @@ describe("POST /api/auth/register", () => {
 
     const res = await request(app).post("/api/auth/register").send({
       fullName: "Test Student",
-      email: "new@example.com",
+      email: "  NEW@Example.com ",
       password: "Tr0ub4dor&Horse-92",
       confirmPassword: "Tr0ub4dor&Horse-92",
     });
@@ -151,9 +155,28 @@ describe("POST /api/auth/register", () => {
     expect(otpHash).toMatch(/^[a-f0-9]{64}$/);
     expect(mockedSendVerificationCode).toHaveBeenCalledTimes(1);
     expect(mockedSendVerificationCode.mock.calls[0][0]).toBe("new@example.com");
-    expect(otpHash).not.toBe(mockedSendVerificationCode.mock.calls[0][1]);
+    expect(mockedSendVerificationCode.mock.calls[0][1]).toMatch(/^\d{6}$/);
+    expect(otpHash).toBe(hashOtp(mockedSendVerificationCode.mock.calls[0][1]));
     expect(res.text).not.toContain(mockedSendVerificationCode.mock.calls[0][1]);
     expect(mockedStreakModel.recordActivity).not.toHaveBeenCalled();
+  });
+
+  it("keeps the only OTP when delivery status is uncertain instead of retrying", async () => {
+    mockedStudentModel.findByEmail.mockResolvedValue(null);
+    mockedStudentModel.create.mockResolvedValue(42);
+    mockedSendVerificationCode.mockRejectedValue(new EmailDeliveryStatusUnknownError());
+
+    const res = await request(app).post("/api/auth/register").send({
+      fullName: "Test Student",
+      email: "new@example.com",
+      password: "Tr0ub4dor&Horse-92",
+      confirmPassword: "Tr0ub4dor&Horse-92",
+    });
+
+    expect(res.status).toBe(503);
+    expect(mockedEmailOtpModel.save).toHaveBeenCalledTimes(1);
+    expect(mockedSendVerificationCode).toHaveBeenCalledTimes(1);
+    expect(mockedEmailOtpModel.delete).not.toHaveBeenCalled();
   });
 
   it("rejects a password confirmation mismatch on the server", async () => {
@@ -290,8 +313,7 @@ describe("POST /api/auth/login", () => {
   describe("email verification endpoints", () => {
     it("verifies an account without returning the submitted code", async () => {
       const bcrypt = require("bcrypt");
-      const { createOtp } = require("../src/services/emailVerification");
-      const otp = createOtp();
+      const otp = "004821";
       const unverifiedStudent: Student = {
         student_id: 17,
         full_name: "New Student",
@@ -318,12 +340,13 @@ describe("POST /api/auth/login", () => {
 
       const res = await request(app)
         .post("/api/auth/verify-otp")
-        .send({ email: "new@example.com", otp });
+        .send({ email: " NEW@EXAMPLE.COM ", otp: "0 0 4 8 2 1" });
 
       expect(res.status).toBe(200);
       expect(res.body.verified).toBe(true);
       expect(res.text).not.toContain(otp);
-      expect(mockedEmailOtpModel.verify).toHaveBeenCalledWith(17, expect.any(String));
+      expect(mockedStudentModel.findByEmail).toHaveBeenCalledWith("new@example.com");
+      expect(mockedEmailOtpModel.verify).toHaveBeenCalledWith(17, hashOtp(otp));
 
       const login = await request(app)
         .post("/api/auth/login")
@@ -353,10 +376,11 @@ describe("POST /api/auth/login", () => {
       });
       const res = await request(app)
         .post("/api/auth/resend-otp")
-        .send({ email: "new@example.com" });
+        .send({ email: " NEW@EXAMPLE.COM " });
 
       expect(res.status).toBe(200);
       expect(res.body.message).toMatch(/If the account/);
+      expect(mockedStudentModel.findByEmail).toHaveBeenCalledWith("new@example.com");
       expect(mockedEmailOtpModel.reserveResend).toHaveBeenCalledWith(17, expect.any(String));
       expect(mockedSendVerificationCode).not.toHaveBeenCalled();
     });

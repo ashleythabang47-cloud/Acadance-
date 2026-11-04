@@ -9,7 +9,12 @@ import { JWT_EXPIRES_IN, JWT_SECRET } from "../utils/authToken";
 import { getPasswordStrength } from "../utils/passwordStrength";
 import { validateEmail, validateEmailForAccount, validateName } from "../utils/inputValidation";
 import { EmailOtpModel } from "../models/emailOtpModel";
-import { createOtp, hashOtp, sendVerificationCode } from "../services/emailVerification";
+import {
+  createOtp,
+  EmailDeliveryStatusUnknownError,
+  hashOtp,
+  sendVerificationCode,
+} from "../services/emailVerification";
 import { recordAudit } from "../services/auditLog";
 
 export async function register(req: Request, res: Response) {
@@ -54,14 +59,18 @@ export async function register(req: Request, res: Response) {
 
         try {
           await sendVerificationCode(normalizedEmail, otp);
-        } catch {
-          await EmailOtpModel.delete(existing.student_id);
+        } catch (error) {
+          const deliveryStatusUnknown = error instanceof EmailDeliveryStatusUnknownError;
+          if (!deliveryStatusUnknown) await EmailOtpModel.delete(existing.student_id);
           await recordAudit({
             actorId: existing.student_id,
             targetType: "user",
             targetId: existing.student_id,
             action: "otp_failed",
-            after: { reason: "delivery_failed", source: "resend" },
+            after: {
+              reason: deliveryStatusUnknown ? "delivery_status_unknown" : "delivery_failed",
+              source: "resend",
+            },
             ipAddress: req.ip,
           });
           return res.status(503).json({
@@ -114,14 +123,15 @@ export async function register(req: Request, res: Response) {
         after: { source: "signup" },
         ipAddress: req.ip,
       });
-    } catch {
-      await EmailOtpModel.delete(studentId);
+    } catch (error) {
+      const deliveryStatusUnknown = error instanceof EmailDeliveryStatusUnknownError;
+      if (!deliveryStatusUnknown) await EmailOtpModel.delete(studentId);
       await recordAudit({
         actorId: studentId,
         targetType: "user",
         targetId: studentId,
         action: "otp_failed",
-        after: { reason: "delivery_failed" },
+        after: { reason: deliveryStatusUnknown ? "delivery_status_unknown" : "delivery_failed" },
         ipAddress: req.ip,
       });
       return res.status(503).json({
